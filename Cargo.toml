@@ -1,0 +1,28 @@
+[package]
+name = "tif2jp2"
+version = "0.1.0"
+edition = "2024"
+authors = ["Jan Houserek"]
+repository = "https://github.com/bezverec/tif2jp2"
+description = "TIFF to JPEG2000 (JP2) lossless converter via OpenJPEG"
+
+[dependencies]
+anyhow = "1"
+thiserror = "1"
+clap = { version = "4.5", features = ["derive"] }
+tiff = "0.9"
+openjpeg-sys = "1.0.12"
+which = "6"
+walkdir = "2"
+libc = "0.2"
+rayon = "1"
+scopeguard = "1.2.0"
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+codegen-units = 1
+panic = "abort"
+
+[features]
+default = []
