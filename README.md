@@ -1,6 +1,6 @@
 # tif2jp2
 
-TIFF → JPEG 2000 (JP2) lossless converter built in Rust with a thin FFI layer over OpenJPEG.
+TIFF to JPEG2000 (JP2) lossless converter built in Rust with a thin FFI layer over OpenJPEG.
 
 ✅ Lossless 5/3 wavelet (reversible)
 
