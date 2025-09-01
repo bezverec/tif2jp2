@@ -12,7 +12,7 @@ TIFF → JPEG 2000 (JP2) lossless converter built in Rust with a thin FFI layer 
 
 ✅ Multi-threaded via OpenJPEG
 
-✅ AVX2 fast path for 16-bit grayscale upload
+✅ AVX2 fast path upload
 
 ✅ Single file or batch/recursive mode
 
@@ -58,7 +58,7 @@ tif2jp2 ./archive --recursive -o ./out -v
 
 - **Multi-threaded:** --threads sets OpenJPEG worker threads (0 = auto).
 
-- **AVX2 upload:** accelerated 16-bit grayscale buffer upload to OpenJPEG image planes.
+- **AVX2 upload:** accelerated buffer upload to OpenJPEG image planes.
 
 ## Installation
 
@@ -74,7 +74,7 @@ tif2jp2 ./archive --recursive -o ./out -v
 
 - The crate depends on:
 
-`openjpeg-sys, tiff, walkdir, clap, anyhow, libc`
+`openjpeg-sys, tiff, walkdir, which, clap, anyhow, libc, rayon, thiserror`
 
 The program is an FFI wrapper around OpenJPEG for encoding, but it handles TIFF parsing, metadata mapping (DPI/ICC/XMP), and planar upload itself.
 
@@ -117,7 +117,7 @@ If you see `“The code execution cannot proceed because openjp2.dll was not fou
 
 Run `tif2jp2 --help` anytime:
 ```
-TIFF → JPEG 2000 (JP2) lossless via OpenJPEG FFI
+TIFF to JPEG2000 (JP2) lossless via OpenJPEG FFI
 
 Usage: tif2jp2 [OPTIONS] <INPUT>
 
@@ -187,9 +187,7 @@ Note: with `tiff` crate v0.9.x, ICC may sometimes be read as a single Byte/Ascii
 
 - **Resolutions:** `--levels auto` chooses a sane value based on image size (clamped 3..8).
 
-- **AVX2 path:** On x86-64 with AVX2, 16-bit grayscale upload is accelerated (`--avx2`, on by default).
-
-For Kakadu-like speeds, ensure tiling, enough threads, and fast I/O. This tool focuses on a clean, lossless archival path while keeping performance competitive with OpenJPEG.
+- **AVX2 path:** On x86-64 with AVX2 upload is accelerated (`--avx2`, on by default).
 
 ### Troubleshooting
 **“No input TIFFs found”**
