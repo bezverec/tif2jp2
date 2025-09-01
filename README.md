@@ -98,7 +98,7 @@ cargo build --release
 
 1. Install a recent **Rust** toolchain (MSVC).
 
-2. Install **OpenJPEG** and make sure `openjp2.dll` is reachable at runtime:
+2. Install (download & unzip) **OpenJPEG** and make sure `openjp2.dll` is reachable at runtime:
 
   - Put `openjp2.dll` next to tif2jp2.exe, or
 
@@ -154,7 +154,7 @@ tif2jp2 ./input --recursive -o ./out -v
 tif2jp2 image.tif -o image.jp2 --icc ./profiles/sRGB.icc
 
 # Use all cores automatically, disable XMP fallback
-tif2jp2 img.tif -o img.jp2 --threads 0 --xmp-dpi=false
+tif2jp2 img.tif -o img.jp2 --threads 0 --no-xmp-dpi
 ```
 
 ### Metadata handling
@@ -187,7 +187,7 @@ Note: with `tiff` crate v0.9.x, ICC may sometimes be read as a single Byte/Ascii
 
 - **Resolutions:** `--levels auto` chooses a sane value based on image size (clamped 3..8).
 
-- **AVX2 path:** On x86-64 with AVX2 upload is accelerated (`--avx2`, on by default).
+- **AVX2 path:** On x86-64 with AVX2 upload is accelerated (`--avx2`, off by default).
 
 ### Troubleshooting
 **“No input TIFFs found”**
