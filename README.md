@@ -90,7 +90,7 @@ Build:
 ```
 git clone https://github.com/bezverec/tif2jp2.git
 cd tif2jp2
-cargo build --release
+RUSTFLAGS="-C target-cpu=native"; cargo build --release
 # binary at target/release/tif2jp2
 ```
 
@@ -98,7 +98,7 @@ cargo build --release
 
 1. Install a recent **Rust** toolchain (MSVC).
 
-2. Install (download & unzip) **OpenJPEG** and make sure `openjp2.dll` is reachable at runtime:
+2. Install (download & unzip to tif2jp2 folder) **OpenJPEG** and make sure `openjp2.dll` is reachable at runtime:
 
   - Put `openjp2.dll` next to tif2jp2.exe, or
 
@@ -108,7 +108,7 @@ Build:
 ```
 git clone https://github.com/your-org/tif2jp2.git
 cd tif2jp2
-cargo build --release
+$env:RUSTFLAGS="-C target-cpu=native"; cargo build --release
 # binary at target\release\tif2jp2.exe
 ```
 If you see `“The code execution cannot proceed because openjp2.dll was not found”`, place the **DLL** next to the **EXE** or add it to `PATH`.
