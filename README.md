@@ -79,6 +79,8 @@ ilustrovany_zpravodaj_1938-06-27_cislo29_strana2.tif,"Kakadu","5","2,0580679","1
 
 ## Quick Start
 
+On Windows you can use absolute path (e.g. `.\tif2jp2.exe input.tif`), if tif2jp2 is not in PATH.
+
 **Convert a single TIFF to JP2 (same folder/name)**
 
 ```bash
