@@ -155,6 +155,7 @@ Options:
       --tile <WxH>        Tile size, e.g. 1024x1024 [default: 1024x1024]
       --block <WxH>       Code-block size, e.g. 64x64 [default: 64x64]
       --levels <NUM|auto> Number of resolutions [default: auto]
+      --order <ORDER>     Progression order (LRCP|RLCP|RPCL|PCRL|CPRL) [default: RPCL]
       --force             Overwrite existing output files
       --threads <N>       OpenJPEG threads (0 = auto = all cores) [default: 0]
       --icc <PATH>        Path to ICC profile (overrides ICC detected in TIFF)
