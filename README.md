@@ -61,10 +61,39 @@ tif2jp2 ./scans -o ./out --force
 - **DPI preservation**: Writes resolution to JP2 `res` box (optionally XMP)  
 - **ICC attachment**: Embeds ICC from TIFF or `--icc` file  
 - **Tiling & code-blocks**: `--tile WxH`, `--block WxH` for efficient encoding  
+- **Precincts**: 256×256 for higher resolutions, 128×128 for lowest  
+- **SOP/EPH markers**: Enabled by default (`--no-sop`, `--no-eph` to disable)  
+- **Tile-parts R**: Enabled by default (`--no-tp-r` to disable)  
+- **MCT**: Reversible MCT for RGB (`--no-mct` to disable)  
 - **Multi-threaded**: `--threads` sets worker threads (0 = auto)  
 - **AVX2 upload**: Accelerated buffer upload (`--avx2`)  
 - **Smart file handling**: Skips existing files unless `--force`  
 - **Robust error handling**: Continues even if some files fail  
+
+---
+## Compliance with the Czech Archival Standard (NDK)
+
+This converter implements the parameters required by the Czech national standard for archival JPEG2000 masters:
+
+| Parameter | Standard | Implemented |
+|-----------|----------|-------------|
+| Compression | Lossless | ✅ 5/3 reversible |
+| Transform | 5-3 filter | ✅ |
+| Layers | 1 | ✅ |
+| Tiling | 4096×4096 | ✅ (`--tile 4096x4096`) |
+| Progression order | RPCL | ✅ |
+| Decomposition levels | 5 or 6 | ✅ (`--levels`) |
+| Code-block size | 64×64 | ✅ (`--block 64x64`) |
+| Precincts | 256×256, 128×128 | ✅ (via `fill_precincts`) |
+| SOP markers | Yes | ✅ (default on) |
+| EPH markers | Yes | ✅ (default on) |
+| Tile-parts (R) | Yes | ✅ (default on) |
+| ICC profiles | Yes | ✅ (from TIFF or `--icc`) |
+| ROI | No | ✅ (disabled) |
+| Embedded metadata | No | ✅ (only optional XMP if `--xmp-dpi`) |
+| TLM markers | Yes | ❌ not available in current OpenJPEG Rust bindings |
+
+⚠️ **Note:** TLM (Tile-part Length Markers) are part of the standard but cannot be enabled via the current `openjpeg_sys` bindings, as the `cp_tlm` field is missing. All other parameters are fully supported.
 
 ---
 
@@ -135,6 +164,14 @@ Options:
       --no-xmp-dpi        Disable Write DPI into XMP 'uuid' box
       --avx2              Enable AVX2 fast path if supported [default: off]
       --no-avx2           Force no AVX2
+      --sop               Enable SOP markers [default: on]
+      --no-sop            Disable SOP markers
+      --eph               Enable EPH markers [default: on]
+      --no-eph            Disable EPH markers
+      --precincts         Enable precinct partitioning (256x256, 128x128)
+      --tp-r              Enable tile-parts split by resolution (R)
+      --mct               Enable reversible MCT for RGB [default: on]
+      --no-mct            Disable MCT
   -v, --verbose...        Increase verbosity (-v, -vv). 0 = errors only.
       --help              Print help
       --version           Print version
