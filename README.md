@@ -270,6 +270,9 @@ The code is AI generated using ChatGPT model 5 and Deepseek v3.x.
 ## Benchmark
 
 My benchmark attempt on Windows 11 (not objective):
+- tif2jp2 v0.1.7
+- Kakadu v8.4.1
+
 ```
 Per-file results:
 
