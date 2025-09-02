@@ -87,7 +87,6 @@ pub struct Args {
     /// Write DPI into JP2 'res' box [default: on]
     #[arg(long = "dpi-box", action = ArgAction::SetTrue, overrides_with = "no-dpi-box")]
     pub dpi_box_on: bool,
-
     /// Disable Write DPI into JP2 'res' box
     #[arg(long = "no-dpi-box", action = ArgAction::SetTrue, overrides_with = "dpi-box")]
     pub dpi_box_off: bool,
@@ -95,7 +94,6 @@ pub struct Args {
     /// Write DPI into XMP 'uuid' box [default: on]
     #[arg(long = "xmp-dpi", action = ArgAction::SetTrue, overrides_with = "no-xmp-dpi")]
     pub xmp_dpi_on: bool,
-
     /// Disable Write DPI into XMP 'uuid' box
     #[arg(long = "no-xmp-dpi", action = ArgAction::SetTrue, overrides_with = "xmp-dpi")]
     pub xmp_dpi_off: bool,
@@ -103,35 +101,44 @@ pub struct Args {
     /// Enable AVX2 fast path if supported [default: off]
     #[arg(long = "avx2", action = ArgAction::SetTrue, overrides_with = "no-avx2")]
     pub avx2_on: bool,
-
     /// Force no AVX2
     #[arg(long = "no-avx2", action = ArgAction::SetTrue, overrides_with = "avx2")]
     pub avx2_off: bool,
 
-    /// Enable tile-parts split by Resolution [default: on]
-    #[arg(long = "tp-r", action = ArgAction::SetTrue, default_value_t = true)]
-    #[arg(long = "no-tp-r", action = ArgAction::SetFalse)]
-    pub tp_r: bool,
+    /// Enable tile-parts split by Resolution (R) [default: on]
+    #[arg(long = "tp-r", action = ArgAction::SetTrue, overrides_with = "no-tp-r")]
+    pub tp_r_on: bool,
+    /// Disable tile-parts split by Resolution (R)
+    #[arg(long = "no-tp-r", action = ArgAction::SetTrue, overrides_with = "tp-r")]
+    pub tp_r_off: bool,
 
-    /// Enable precincts 256x256 … 128x128 [default: on]
-    #[arg(long = "precincts", action = ArgAction::SetTrue, default_value_t = true)]
-    #[arg(long = "no-precincts", action = ArgAction::SetFalse)]
-    pub precincts: bool,
+    /// Enable precinct partitioning (256x256 … 128x128) [default: on]
+    #[arg(long = "precincts", action = ArgAction::SetTrue, overrides_with = "no-precincts")]
+    pub precincts_on: bool,
+    /// Disable precinct partitioning
+    #[arg(long = "no-precincts", action = ArgAction::SetTrue, overrides_with = "precincts")]
+    pub precincts_off: bool,
 
     /// Enable SOP markers (Start of Packet) [default: on]
-    #[arg(long = "sop", action = ArgAction::SetTrue, default_value_t = true)]
-    #[arg(long = "no-sop", action = ArgAction::SetFalse)]
-    pub sop: bool,
+    #[arg(long = "sop", action = ArgAction::SetTrue, overrides_with = "no-sop")]
+    pub sop_on: bool,
+    /// Disable SOP markers
+    #[arg(long = "no-sop", action = ArgAction::SetTrue, overrides_with = "sop")]
+    pub sop_off: bool,
 
     /// Enable EPH markers (End of Packet Header) [default: on]
-    #[arg(long = "eph", action = ArgAction::SetTrue, default_value_t = true)]
-    #[arg(long = "no-eph", action = ArgAction::SetFalse)]
-    pub eph: bool,
+    #[arg(long = "eph", action = ArgAction::SetTrue, overrides_with = "no-eph")]
+    pub eph_on: bool,
+    /// Disable EPH markers
+    #[arg(long = "no-eph", action = ArgAction::SetTrue, overrides_with = "eph")]
+    pub eph_off: bool,
 
     /// Enable reversible MCT for RGB [default: on]
-    #[arg(long = "mct", action = ArgAction::SetTrue, default_value_t = true)]
-    #[arg(long = "no-mct", action = ArgAction::SetFalse)]
-    pub mct: bool,
+    #[arg(long = "mct", action = ArgAction::SetTrue, overrides_with = "no-mct")]
+    pub mct_on: bool,
+    /// Disable reversible MCT for RGB
+    #[arg(long = "no-mct", action = ArgAction::SetTrue, overrides_with = "mct")]
+    pub mct_off: bool,
 
     /// Increase verbosity (-v, -vv, -vvv)
     #[arg(short = 'v', action = ArgAction::Count)]
@@ -142,38 +149,32 @@ pub struct Args {
 
 // Normalized config used in the program
 pub struct Effective {
-    pub avx2: bool,     // default: false
-    pub dpi_box: bool,  // default: true
-    pub xmp_dpi: bool,  // default: true
+    pub avx2: bool,      // default: false
+    pub dpi_box: bool,   // default: true
+    pub xmp_dpi: bool,   // default: true
+    pub tp_r: bool,      // default: true
+    pub precincts: bool, // default: true
+    pub sop: bool,       // default: true
+    pub eph: bool,       // default: true
+    pub mct: bool,       // default: true
 }
-
 impl Args {
     pub fn effective(&self) -> Effective {
-        let dpi_box = if self.dpi_box_on {
-            true
-        } else if self.dpi_box_off {
-            false
-        } else {
-            true
-        };
+        #[inline]
+        fn resolve(on: bool, off: bool, default_: bool) -> bool {
+            if on { true } else if off { false } else { default_ }
+        }
 
-        let xmp_dpi = if self.xmp_dpi_on {
-            true
-        } else if self.xmp_dpi_off {
-            false
-        } else {
-            true
-        };
+        let dpi_box   = resolve(self.dpi_box_on,   self.dpi_box_off,   true);
+        let xmp_dpi   = resolve(self.xmp_dpi_on,   self.xmp_dpi_off,   true);
+        let avx2      = resolve(self.avx2_on,      self.avx2_off,      false);
+        let tp_r      = resolve(self.tp_r_on,      self.tp_r_off,      true);
+        let precincts = resolve(self.precincts_on, self.precincts_off, true);
+        let sop       = resolve(self.sop_on,       self.sop_off,       true);
+        let eph       = resolve(self.eph_on,       self.eph_off,       true);
+        let mct       = resolve(self.mct_on,       self.mct_off,       true);
 
-        let avx2 = if self.avx2_on {
-            true
-        } else if self.avx2_off {
-            false
-        } else {
-            false
-        };
-
-        Effective { avx2, dpi_box, xmp_dpi }
+        Effective { avx2, dpi_box, xmp_dpi, tp_r, precincts, sop, eph, mct }
     }
 }
 
@@ -856,12 +857,8 @@ fn convert_one(input: &Path, output: &Path, args: &Args) -> Result<()> {
     enc_params.prog_order = PROG_ORDER::OPJ_RPCL;
 
     // Enable SOP/EPH markers
-    if args.sop {
-        enc_params.csty |= J2K_CCP_CSTY_SOP;
-    }
-    if args.eph {
-        enc_params.csty |= J2K_CCP_CSTY_EPH;
-    }
+    if eff.sop { enc_params.csty |= J2K_CCP_CSTY_SOP; }
+    if eff.eph { enc_params.csty |= J2K_CCP_CSTY_EPH; }
 
     // Enable precincts 256×256 … 128×128 (clamped to >= code-block, power-of-two)
     // Copy code-block sizes first to avoid borrow issues
@@ -874,22 +871,18 @@ fn convert_one(input: &Path, output: &Path, args: &Args) -> Result<()> {
     enc_params.tp_flag = b'R' as i8;
 
     // Enable reversible MCT for RGB if allowed
-    if rgb && args.mct {
-        enc_params.tcp_mct = 1;
-    }
+    if rgb && eff.mct { enc_params.tcp_mct = 1; }
 
     // Enable precincts 256×256 … 128×128 (power-of-two, >= code-block)
-    if args.precincts {
+    if eff.precincts {
         let cblk_w_i32 = enc_params.cblockw_init;
         let cblk_h_i32 = enc_params.cblockh_init;
         fill_precincts(&mut enc_params, levels, cblk_w_i32, cblk_h_i32);
     }
 
     // Enable tile-parts with R split order (by resolution)
-    if args.tp_r {
-        enc_params.tp_on = 1;
-        enc_params.tp_flag = b'R' as i8;
-    }
+    if eff.tp_r { enc_params.tp_on = 1; enc_params.tp_flag = b'R' as i8; }
+
 
     // Single quality layer, explicitly lossless
     enc_params.tcp_numlayers = 1;     // already set, keep it
