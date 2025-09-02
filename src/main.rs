@@ -39,7 +39,7 @@ impl Log {
 #[command(
     author,
     version,
-    about = "TIFF → JPEG 2000 (JP2) lossless via OpenJPEG FFI",
+    about = "TIFF to JPEG2000 (JP2) lossless via OpenJPEG FFI",
     long_about = None
 )]
 pub struct Args {
@@ -55,7 +55,7 @@ pub struct Args {
     pub recursive: bool,
 
     /// Tile size, e.g. 1024x1024
-    #[arg(long, default_value = "1024x1024", value_name = "WxH")]
+    #[arg(long, default_value = "4096x4096", value_name = "WxH")]
     pub tile: String,
 
     /// Code-block size, e.g. 64x64
@@ -63,7 +63,7 @@ pub struct Args {
     pub block: String,
 
     /// Number of resolutions
-    #[arg(long, default_value = "auto", value_name = "NUM|auto")]
+    #[arg(long, default_value = "6", value_name = "NUM|auto")]
     pub levels: String,
 
     /// Overwrite existing output files
@@ -103,6 +103,31 @@ pub struct Args {
     /// Force no AVX2
     #[arg(long = "no-avx2", action = ArgAction::SetTrue, overrides_with = "avx2")]
     pub avx2_off: bool,
+
+    /// Enable tile-parts split by Resolution [default: on]
+    #[arg(long = "tp-r", action = ArgAction::SetTrue, default_value_t = true)]
+    #[arg(long = "no-tp-r", action = ArgAction::SetFalse)]
+    pub tp_r: bool,
+
+    /// Enable precincts 256x256 … 128x128 [default: on]
+    #[arg(long = "precincts", action = ArgAction::SetTrue, default_value_t = true)]
+    #[arg(long = "no-precincts", action = ArgAction::SetFalse)]
+    pub precincts: bool,
+
+    /// Enable SOP markers (Start of Packet) [default: on]
+    #[arg(long = "sop", action = ArgAction::SetTrue, default_value_t = true)]
+    #[arg(long = "no-sop", action = ArgAction::SetFalse)]
+    pub sop: bool,
+
+    /// Enable EPH markers (End of Packet Header) [default: on]
+    #[arg(long = "eph", action = ArgAction::SetTrue, default_value_t = true)]
+    #[arg(long = "no-eph", action = ArgAction::SetFalse)]
+    pub eph: bool,
+
+    /// Enable reversible MCT for RGB [default: on]
+    #[arg(long = "mct", action = ArgAction::SetTrue, default_value_t = true)]
+    #[arg(long = "no-mct", action = ArgAction::SetFalse)]
+    pub mct: bool,
 
     /// Increase verbosity (-v, -vv, -vvv)
     #[arg(short = 'v', action = ArgAction::Count)]
@@ -614,6 +639,47 @@ unsafe fn deinterleave_rgb8_row_avx2(
 
 enum PixelBuf { U8(Vec<u8>), U16(Vec<u16>) }
 
+// J2K code-style flags (mirror of OpenJPEG defines)
+const J2K_CCP_CSTY_PRT: i32 = 0x01; // precinct partition
+const J2K_CCP_CSTY_SOP: i32 = 0x02; // SOP markers
+const J2K_CCP_CSTY_EPH: i32 = 0x04; // EPH markers
+
+/// Round up to the next power of two, respecting a minimum.
+#[inline]
+fn next_pow2_at_least(x: i32, min: i32) -> i32 {
+    let v = x.max(min).max(1);
+    let mut p = 1;
+    while p < v && p < 32768 {
+        p <<= 1;
+    }
+    p
+}
+
+/// Enable precincts and fill per-resolution sizes (256×256 ... 128×128).
+/// Ensures each precinct is a power of two and >= code-block size.
+fn fill_precincts(enc: &mut openjpeg_sys::opj_cparameters_t, levels: u32, cblk_w: i32, cblk_h: i32) {
+    // Enable precinct partitioning
+    enc.csty |= J2K_CCP_CSTY_PRT;
+
+    // How many resolution-specific entries we define
+    enc.res_spec = levels.min(32) as i32;
+
+    // For each resolution r: 256×256, and 128×128 at the lowest resolution
+    let lvls = levels.min(32);
+    for r in 0..lvls {
+        let is_last = r == lvls - 1;
+        let mut pw = if is_last { 128 } else { 256 };
+        let mut ph = if is_last { 128 } else { 256 };
+
+        // Must be >= code-block and power of two
+        pw = next_pow2_at_least(pw, cblk_w);
+        ph = next_pow2_at_least(ph, cblk_h);
+
+        enc.prcw_init[r as usize] = pw;
+        enc.prch_init[r as usize] = ph;
+    }
+}
+
 // --- Main conversion -----------------------------------------------------------
 
 fn convert_one(input: &Path, output: &Path, args: &Args) -> Result<()> {
@@ -706,27 +772,114 @@ fn convert_one(input: &Path, output: &Path, args: &Args) -> Result<()> {
 
     // Encoder parameters (lossless 5/3, tiles, code-blocks, levels)
     eprintln!("  [DEBUG] Setting encoder parameters");
-    let (tile_w, tile_h) = parse_wh(&args.tile)?;
-    let (blk_w, blk_h)   = parse_wh(&args.block)?;
-    let levels = if args.levels == "auto" { auto_levels(w, h) } else { args.levels.parse::<u32>()? };
 
+    // Parse tile size
+    let (tile_w, tile_h) = parse_wh(&args.tile)?;
+
+    // Parse code-block size + validate (must be power of two in range 4..=1024)
+    let (blk_w, blk_h) = parse_wh(&args.block)?;
+    let is_pow2 = |v: u32| v != 0 && (v & (v - 1)) == 0;
+    let valid_cb = |v: u32| is_pow2(v) && (4..=1024).contains(&v);
+    if !valid_cb(blk_w) || !valid_cb(blk_h) {
+        return Err(anyhow!(
+            "Invalid code-block size {}x{} (must be power of two in 4..=1024)",
+            blk_w, blk_h
+        ));
+    }
+
+    // Number of wavelet decomposition levels
+    let levels: u32 = if args.levels == "auto" {
+        auto_levels(w, h)
+    } else {
+        args.levels.parse::<u32>().context("parse --levels")?
+    };
+
+    // Initialize OpenJPEG encoder parameters with defaults
     let mut enc_params: opj_cparameters_t = unsafe {
         let mut p = std::mem::MaybeUninit::<opj_cparameters_t>::zeroed();
         opj_set_default_encoder_parameters(p.as_mut_ptr());
         p.assume_init()
     };
 
-    enc_params.tcp_numlayers = 1;
-    enc_params.irreversible  = 0; // 5/3 lossless
-    enc_params.tile_size_on  = 1;
-    enc_params.cp_tx0 = 0; enc_params.cp_ty0 = 0;
-    enc_params.cp_tdx = tile_w as i32; enc_params.cp_tdy = tile_h as i32;
-    enc_params.cblockw_init = blk_w as i32; enc_params.cblockh_init = blk_h as i32;
-    enc_params.numresolution = levels as i32;
-    enc_params.prog_order    = PROG_ORDER::OPJ_LRCP;
+    // Reversible 5/3 transform (lossless)
+    enc_params.irreversible = 0;
 
-    // Enable reversible MCT for RGB (often better throughput/ratio; keeps lossless)
-    if rgb { enc_params.tcp_mct = 1; }
+    // Enable tiling
+    enc_params.tile_size_on = 1;
+    enc_params.cp_tx0 = 0;
+    enc_params.cp_ty0 = 0;
+    enc_params.cp_tdx = tile_w as i32;
+    enc_params.cp_tdy = tile_h as i32;
+
+    // Code-block size
+    enc_params.cblockw_init = blk_w as i32;
+    enc_params.cblockh_init = blk_h as i32;
+
+    // Resolution levels
+    enc_params.numresolution = levels as i32;
+
+    // Single quality layer (lossless)
+    enc_params.tcp_numlayers = 1;
+
+    // Progression order (RPCL as required)
+    enc_params.prog_order = PROG_ORDER::OPJ_RPCL;
+
+    // Enable SOP markers (Start of Packet)
+    enc_params.csty |= J2K_CCP_CSTY_SOP;
+
+    // Enable EPH markers (End of Packet Header)
+    enc_params.csty |= J2K_CCP_CSTY_EPH;
+
+    // Resolution levels
+    enc_params.numresolution = levels as i32;
+
+    // Single quality layer (lossless)
+    enc_params.tcp_numlayers = 1;
+
+    // Progression order (RPCL as required)
+    enc_params.prog_order = PROG_ORDER::OPJ_RPCL;
+
+    // Enable SOP/EPH markers
+    if args.sop {
+        enc_params.csty |= J2K_CCP_CSTY_SOP;
+    }
+    if args.eph {
+        enc_params.csty |= J2K_CCP_CSTY_EPH;
+    }
+
+    // Enable precincts 256×256 … 128×128 (clamped to >= code-block, power-of-two)
+    // Copy code-block sizes first to avoid borrow issues
+    let cblk_w_i32 = enc_params.cblockw_init;
+    let cblk_h_i32 = enc_params.cblockh_init;
+    fill_precincts(&mut enc_params, levels, cblk_w_i32, cblk_h_i32);
+
+    // Enable tile-parts with R split order (by resolution)
+    enc_params.tp_on = 1;
+    enc_params.tp_flag = b'R' as i8;
+
+    // Enable reversible MCT for RGB if allowed
+    if rgb && args.mct {
+        enc_params.tcp_mct = 1;
+    }
+
+    // Enable precincts 256×256 … 128×128 (power-of-two, >= code-block)
+    if args.precincts {
+        let cblk_w_i32 = enc_params.cblockw_init;
+        let cblk_h_i32 = enc_params.cblockh_init;
+        fill_precincts(&mut enc_params, levels, cblk_w_i32, cblk_h_i32);
+    }
+
+    // Enable tile-parts with R split order (by resolution)
+    if args.tp_r {
+        enc_params.tp_on = 1;
+        enc_params.tp_flag = b'R' as i8;
+    }
+
+    // Single quality layer, explicitly lossless
+    enc_params.tcp_numlayers = 1;     // already set, keep it
+    enc_params.tcp_rates[0] = 0.0;    // 0.0 = lossless in OpenJPEG
+    enc_params.cp_disto_alloc = 1;    // use rate/distortion allocation (required when using rates)
+    enc_params.cp_fixed_quality = 0;  // make sure we're not using fixed PSNR mode
 
     eprintln!("  [DEBUG] Creating OpenJPEG codec");
     let codec: *mut opj_codec_t = unsafe { opj_create_compress(CODEC_FORMAT::OPJ_CODEC_JP2) };
