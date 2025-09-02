@@ -14,7 +14,7 @@ TIFF to JPEG2000 (JP2) lossless converter built in Rust with a thin FFI layer ov
 **Goals:** a practical, fast, no-nonsense archival path from TIFF to JP2 while staying compatible with common JP2 readers, while not sacrificing acrhival level quality (FADGI, Metamorfoze, Czech national standard: NDK).
 
 # Notice
-Only Windows version has been tested so far. My very first very subjective benchmark results: *(your results may vary significantly)*
+Only Windows version has been tested so far. My very first very subjective benchmark results on Windows 11 with AVX2 enabled: *(your results may vary significantly)*
 
 - tif2jp2 v0.1.0
 - Kakadu v8.4.1
