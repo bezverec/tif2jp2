@@ -14,7 +14,9 @@ TIFF to JPEG2000 (JP2) lossless converter built in Rust with a thin FFI layer ov
 **Goals:** a practical, fast, no-nonsense archival path from TIFF to JP2 for x86_64 machines with AVX2 SIMD; while staying compatible with common JP2 readers, while not sacrificing acrhival level quality (FADGI, Metamorfoze, Czech national standard: [NDK](https://standardy.ndk.cz/ndk/standardy-digitalizace/standardy-pro-obrazova-data))
 
 # Notice
+
 Only Windows version has been tested so far. Only parts of the desired goals have been achieved.
+
 ---
 
 ## Quick Start
