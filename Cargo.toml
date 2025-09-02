@@ -1,6 +1,6 @@
 [package]
 name = "tif2jp2"
-version = "0.1.5"
+version = "0.1.6"
 edition = "2024"
 authors = ["Jan Houserek"]
 repository = "https://github.com/bezverec/tif2jp2"

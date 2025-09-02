@@ -78,6 +78,10 @@ pub struct Args {
     #[arg(long, value_name = "PATH")]
     pub icc: Option<PathBuf>,
 
+    /// Progression order (LRCP|RLCP|RPCL|PCRL|CPRL)
+    #[arg(long, default_value = "RPCL", value_name = "ORDER")]
+    pub order: String,
+
     // ---------- toggles: define positive + negative as SEPARATE flags ----------
 
     /// Write DPI into JP2 'res' box [default: on]
@@ -332,6 +336,18 @@ fn auto_levels(w: u32, h: u32) -> u32 {
     let mut k = (m.log2().floor() as i32) - 1;
     if k < 1 { k = 1; }
     (k as u32).clamp(3, 8)
+}
+
+#[inline]
+fn parse_order(s: &str) -> PROG_ORDER {
+    match s.to_ascii_uppercase().as_str() {
+        "LRCP" => PROG_ORDER::OPJ_LRCP,
+        "RLCP" => PROG_ORDER::OPJ_RLCP,
+        "RPCL" => PROG_ORDER::OPJ_RPCL,
+        "PCRL" => PROG_ORDER::OPJ_PCRL,
+        "CPRL" => PROG_ORDER::OPJ_CPRL,
+        _      => PROG_ORDER::OPJ_RPCL, // safe fallback
+    }
 }
 
 // --- TIFF metadata (DPI + ICC) ------------------------------------------------
@@ -822,7 +838,7 @@ fn convert_one(input: &Path, output: &Path, args: &Args) -> Result<()> {
     enc_params.tcp_numlayers = 1;
 
     // Progression order (RPCL as required)
-    enc_params.prog_order = PROG_ORDER::OPJ_RPCL;
+    enc_params.prog_order = parse_order(&args.order);
 
     // Enable SOP markers (Start of Packet)
     enc_params.csty |= J2K_CCP_CSTY_SOP;
