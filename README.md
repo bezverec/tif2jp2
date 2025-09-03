@@ -109,6 +109,7 @@ This converter implements the parameters required by the Czech national standard
 
 ```bash
 sudo apt-get update
+sudo apt-get upgrade
 git clone https://github.com/bezverec/tif2jp2.git
 cd tif2jp2
 RUSTFLAGS="-C target-cpu=native" cargo build --release
