@@ -270,7 +270,7 @@ The code is AI generated using ChatGPT model 5 and Deepseek v3.x.
 
 ## Benchmark
 
-My benchmark attempt on Windows 11 (not objective):
+My benchmark attempt on Windows 11 *(not reliable, your results may vary significantly; I will be happy to see any benchmark and/or real-world results :))*
 - tif2jp2 v0.1.7
 - Kakadu v8.4.1
 
