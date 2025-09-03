@@ -101,11 +101,7 @@ This converter implements the parameters required by the Czech national standard
 ## Build from Source
 
 ### Prerequisites
-1. [**Rust** (stable)](https://www.rust-lang.org/tools/install) and Cargo  
-2. OpenJPEG development/runtime libraries  
-
-**Linux:** `libopenjp2` (`libopenjp2-7`, `libopenjp2-7-dev`)  
-**Windows:** `openjp2.dll` must be available at runtime. You can install [OpenJPEG](https://github.com/uclouvain/openjpeg/releases) simply by unzipping it next to `tif2jp2.exe`
+1. [**Rust** (stable)](https://www.rust-lang.org/tools/install) and Cargo
 
 ---
 
@@ -113,7 +109,6 @@ This converter implements the parameters required by the Czech national standard
 *(has not been tested yet)*
 ```bash
 sudo apt-get update
-sudo apt-get install -y libopenjp2-7 libopenjp2-7-dev
 git clone https://github.com/bezverec/tif2jp2.git
 cd tif2jp2
 RUSTFLAGS="-C target-cpu=native" cargo build --release
@@ -128,15 +123,11 @@ cd tif2jp2
 $env:RUSTFLAGS="-C target-cpu=native"; cargo build --release
 # binary at target\release\tif2jp2.exe
 ```
-⚠️ **Windows note:** If you see  
-`The code execution cannot proceed because openjp2.dll was not found`,  
-place `openjp2.dll` next to `tif2jp2.exe` or add its folder to your PATH.
 
 **macOS (ARM)**
 ```
 brew update
 brew upgrade
-brew install openjpeg
 git clone https://github.com/bezverec/tif2jp2.git
 cd tif2jp2
 cargo build --release
