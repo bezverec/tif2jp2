@@ -105,8 +105,7 @@ This converter implements the parameters required by the Czech national standard
 2. OpenJPEG development/runtime libraries  
 
 **Linux:** `libopenjp2` (`libopenjp2-7`, `libopenjp2-7-dev`)  
-**Windows:** `openjp2.dll` must be available at runtime. You can install [OpenJPEG](https://github.com/uclouvain/openjpeg/releases) simply by unzipping it next to `tif2jp2.exe`.
-**macOS:** install openjpeg via Homebrew
+**Windows:** `openjp2.dll` must be available at runtime. You can install [OpenJPEG](https://github.com/uclouvain/openjpeg/releases) simply by unzipping it next to `tif2jp2.exe`
 
 ---
 
