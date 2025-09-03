@@ -3,20 +3,11 @@
 
 TIFF to JPEG2000 (JP2) lossless converter built in Rust with a thin FFI layer over OpenJPEG.
 
-✅ Lossless 5/3 wavelet (reversible)  
-✅ Preserves/reserializes DPI into JP2 res box (and optional XMP fallback)  
-✅ ICC profile attachment (from TIFF or a user-supplied profile)  
-✅ Tiled + code-block encoding  
-✅ Multi-threaded via OpenJPEG  
-✅ AVX2 fast path upload  
-✅ Single file or batch/recursive mode  
-✅ Friendly CLI with `--help`, `--version`, `--verbose`  
-
 **Goals:** a practical, fast, no-nonsense archival path from TIFF to JP2 primarily for x86_64 machines with AVX2 SIMD; while staying compatible with common JP2 readers, while not sacrificing archival level of quality (FADGI, Metamorfoze, primarily Czech national standard: [NDK](https://standardy.ndk.cz/ndk/standardy-digitalizace/standardy-pro-obrazova-data))
 
 # Notice
 
-Only Windows version has been somewhat tested so far. Only parts of the desired goals have been achieved. This is a hobby project written for educational purposes. In it's current state it is not intended as a production use tool.
+Only Windows version has been somewhat tested so far. Only parts of the desired goals have been achieved. This is a hobby project written for educational purposes. In it's current state it is not intended as a production use tool. The validity of the output files has not yet been established.
 
 ---
 
