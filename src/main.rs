@@ -82,6 +82,11 @@ pub struct Args {
     #[arg(long, default_value = "RPCL", value_name = "ORDER")]
     pub order: String,
 
+    /// Archival master NDK preset (alias: --archival). Forces RPCL, 4096x4096 tiles, 64x64 blocks,
+    /// levels=6, SOP/EPH on, precincts on (256..128), tile-parts R, reversible MCT on.
+    #[arg(long = "archival-master-ndk", alias = "archival", action = ArgAction::SetTrue)]
+    pub archival_master_ndk: bool,
+
     // ---------- toggles: define positive + negative as SEPARATE flags ----------
 
     /// Write DPI into JP2 'res' box [default: on]
@@ -178,8 +183,47 @@ impl Args {
     }
 }
 
+fn apply_archival_master_ndk_defaults(args: &mut Args) {
+    // Hard defaults for NDK profile
+    args.tile   = "4096x4096".into();
+    args.block  = "64x64".into();
+    args.levels = "6".into();
+    args.order  = "RPCL".into();
+
+    // Ensure toggles are ON (use the “on/off” páry správně)
+    args.dpi_box_on   = true;  args.dpi_box_off   = false;
+    args.xmp_dpi_on   = true;  args.xmp_dpi_off   = false;
+    args.avx2_off     = false; // AVX2 necháváme na uživateli (výchozí off). Přes --avx2 zapne.
+    args.avx2_on      = args.avx2_on; // nezměněno, aby uživatelský přepínač platil
+
+    // Tile-parts by Resolution (R)
+    // Pozor: máš dvojici --tp-r / --no-tp-r v podobě tp_r_on/tp_r_off
+    args.tp_r_on  = true;  args.tp_r_off  = false;
+
+    // Precincts 256..128
+    args.precincts_on = true; args.precincts_off = false;
+
+    // SOP/EPH markers
+    args.sop_on = true; args.sop_off = false;
+    args.eph_on = true; args.eph_off = false;
+
+    // Reversible MCT for RGB
+    args.mct_on = true; args.mct_off = false;
+
+    // Threads necháme na 0 (= auto) – už default
+    // args.threads = 0;
+}
+
 fn main() -> Result<()> {
-    let args = Args::parse();
+    // Make it mutable because we'll tweak fields via the preset.
+    let mut args = Args::parse();
+
+    // Apply “archival master NDK” as default.
+    apply_archival_master_ndk_defaults(&mut args);
+    eprintln!(
+        "[preset] Using Archival Master NDK defaults (RPCL, 4096x4096, 64x64, levels=6, SOP/EPH/precincts/tp-r/MCT on)"
+    );
+
     let log = Log::new(args.verbose);
 
     log.v1(format!("Input:  {}", args.input.display()));
@@ -187,7 +231,7 @@ fn main() -> Result<()> {
         log.v1(format!("Output: {}", out.display()));
     }
 
-    // Create outpu dir if necessary
+    // Create output dir if necessary
     if let Some(out_dir) = &args.output {
         if out_dir.is_dir() || (!out_dir.exists() && args.input.is_dir()) {
             fs::create_dir_all(out_dir).context("Creating output directory")?;
@@ -196,14 +240,14 @@ fn main() -> Result<()> {
 
     let inputs = collect_inputs(&args.input, args.recursive, args.output.as_deref())?;
     log.v1(format!("Found {} input TIFF(s).", inputs.len()));
-    
+
     if inputs.is_empty() {
         return Err(anyhow!("No input TIFFs found"));
     }
 
     for (idx, input) in inputs.iter().enumerate() {
         let out = derive_output_path(&args, input)?;
-        
+
         // check output dir, create if not present
         if let Some(parent) = out.parent() {
             if !parent.exists() {
@@ -216,7 +260,13 @@ fn main() -> Result<()> {
             continue;
         }
 
-        eprintln!("({}/{}) → Processing: {} -> {}", idx + 1, inputs.len(), input.display(), out.display());
+        eprintln!(
+            "({}/{}) → Processing: {} -> {}",
+            idx + 1,
+            inputs.len(),
+            input.display(),
+            out.display()
+        );
         let t0 = Instant::now();
 
         // Isolate 1 conversion
@@ -239,7 +289,10 @@ fn main() -> Result<()> {
                 } else if let Some(s) = panic.downcast_ref::<String>() {
                     eprintln!("✖ {} — Panic during conversion: {}", input.display(), s);
                 } else {
-                    eprintln!("✖ {} — Panic during conversion: <unknown reason>", input.display());
+                    eprintln!(
+                        "✖ {} — Panic during conversion: <unknown reason>",
+                        input.display()
+                    );
                 }
             }
         }
@@ -247,7 +300,7 @@ fn main() -> Result<()> {
         // Flush
         let _ = std::io::stderr().flush();
         let _ = std::io::stdout().flush();
-        
+
         // Short pause for system stabilization
         std::thread::sleep(std::time::Duration::from_millis(100));
     }
@@ -496,22 +549,33 @@ fn insert_resolution_box_jp2(path: &Path, xdpi: f64, ydpi: f64, unit: ResUnit) -
     // Build 'res ' superbox with 'resc' and 'resd'
     let resc_p = build_resc_resd_payload(v_ppm, h_ppm);
     let resd_p = build_resc_resd_payload(v_ppm, h_ppm);
-    let resc_len = 8 + resc_p.len() as u32;
+    let resc_len = 8 + resc_p.len() as u32; // LBox(4) + TBox(4) + payload
     let resd_len = 8 + resd_p.len() as u32;
 
-    let mut res_super = Vec::new();
-    let total_res_payload = (8 + resc_len) + (8 + resd_len);
-    put_be_u32(total_res_payload as u32, &mut res_super);
-    res_super.extend_from_slice(b"res ");
-    put_be_u32(resc_len, &mut res_super); res_super.extend_from_slice(b"resc"); res_super.extend_from_slice(&resc_p);
-    put_be_u32(resd_len, &mut res_super); res_super.extend_from_slice(b"resd"); res_super.extend_from_slice(&resd_p);
+    // !!! FIX: LBox superboxu = 8 + součet podboxů (už včetně jejich 8 bajtů hlavičky)
+    let total_res_payload = resc_len + resd_len;     // žádné další „+8“ navíc
 
-    // Reconstruct file: [before jp2h] + [new jp2h with extended length] + [after jp2h]
-    let new_jp2h_len = jp2h_len as u32 + res_super.len() as u32;
+    let mut res_super = Vec::with_capacity((8 + total_res_payload) as usize);
+    put_be_u32(8 + total_res_payload, &mut res_super); // LBox superboxu
+    res_super.extend_from_slice(b"res ");
+
+    // 'resc'
+    put_be_u32(resc_len, &mut res_super);
+    res_super.extend_from_slice(b"resc");
+    res_super.extend_from_slice(&resc_p);
+
+    // 'resd'
+    put_be_u32(resd_len, &mut res_super);
+    res_super.extend_from_slice(b"resd");
+    res_super.extend_from_slice(&resd_p);
+
+    // Rebuild file with extended 'jp2h'
+    let new_jp2h_len = (jp2h_len as u32).saturating_add(res_super.len() as u32);
 
     let mut new = Vec::with_capacity(data.len() + res_super.len());
     new.extend_from_slice(&data[..jp2h_off]);
-    put_be_u32(new_jp2h_len, &mut new); new.extend_from_slice(b"jp2h");
+    put_be_u32(new_jp2h_len, &mut new);
+    new.extend_from_slice(b"jp2h");
     new.extend_from_slice(old_payload);
     new.extend_from_slice(&res_super);
     new.extend_from_slice(&data[jp2h_payload_end..]);
