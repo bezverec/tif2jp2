@@ -1,5 +1,5 @@
 # tif2jp2 
-![version](https://img.shields.io/badge/dynamic/toml?url=https://raw.githubusercontent.com/bezverec/tif2jp2/main/Cargo.toml&query=$.package.version&label=version&prefix=v) ![GitHub license](https://img.shields.io/github/license/bezverec/tif2jp2) ![GitHub top language](https://img.shields.io/github/languages/top/bezverec/tif2jp2)
+![version](https://img.shields.io/badge/dynamic/toml?url=https://raw.githubusercontent.com/bezverec/tif2jp2/main/Cargo.toml&query=$.package.version&label=version&prefix=v) ![GitHub license](https://img.shields.io/github/license/bezverec/tif2jp2) ![GitHub top language](https://img.shields.io/github/languages/top/bezverec/tif2jp2) ![Dependencies](https://deps.rs/repo/github/bezverec/tif2jp2/status.svg) ![GitHub last commit](https://img.shields.io/github/last-commit/bezverec/tif2jp2) ![GitHub repo size](https://img.shields.io/github/repo-size/bezverec/tif2jp2) ![LoC](https://tokei.rs/b1/github/bezverec/tif2jp2)
 
 TIFF to JPEG2000 (JP2) lossless converter built in Rust with a thin FFI layer over OpenJPEG.
 
