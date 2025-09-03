@@ -126,12 +126,12 @@ $env:RUSTFLAGS="-C target-cpu=native"; cargo build --release
 ```
 
 **macOS (ARM):**
-```
+```zsh
 brew update
 brew upgrade
 git clone https://github.com/bezverec/tif2jp2.git
 cd tif2jp2
-cargo build --release
+RUSTFLAGS="-C target-cpu=native" cargo build --release
 # binary at target/release/tif2jp2
 ```
 ⚠️ **macOS note:** You may get AVX2 warnings after compilation, which is to be expected.
