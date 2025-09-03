@@ -12,7 +12,7 @@ TIFF to JPEG2000 (JP2) lossless converter built in Rust with a thin FFI layer ov
 ✅ Single file or batch/recursive mode  
 ✅ Friendly CLI with `--help`, `--version`, `--verbose`  
 
-**Goals:** a practical, fast, no-nonsense archival path from TIFF to JP2 for x86_64 machines with AVX2 SIMD; while staying compatible with common JP2 readers, while not sacrificing archival level of quality (FADGI, Metamorfoze, primarily Czech national standard: [NDK](https://standardy.ndk.cz/ndk/standardy-digitalizace/standardy-pro-obrazova-data))
+**Goals:** a practical, fast, no-nonsense archival path from TIFF to JP2 primarily for x86_64 machines with AVX2 SIMD; while staying compatible with common JP2 readers, while not sacrificing archival level of quality (FADGI, Metamorfoze, primarily Czech national standard: [NDK](https://standardy.ndk.cz/ndk/standardy-digitalizace/standardy-pro-obrazova-data))
 
 # Notice
 
@@ -27,31 +27,31 @@ On Windows you can use absolute path (e.g. `.\tif2jp2.exe input.tif`), if tif2jp
 **Convert a single TIFF to JP2 (same folder/name)**
 
 ```bash
-tif2jp2 input.tif
+./tif2jp2 input.tif
 ```
 
 **Convert into a specific output file**
 
 ```bash
-tif2jp2 input.tif -o output.jp2
+./tif2jp2 input.tif -o output.jp2
 ```
 
 **Convert all TIFFs in a folder (non-recursive)**
 
 ```bash
-tif2jp2 ./scans -o ./out
+./tif2jp2 ./scans -o ./out
 ```
 
 **Convert recursively with verbose progress**
 
 ```bash
-tif2jp2 ./archive --recursive -o ./out -v
+./tif2jp2 ./archive --recursive -o ./out -v
 ```
 
 **Force overwrite existing files**
 
 ```bash
-tif2jp2 ./scans -o ./out --force
+./tif2jp2 ./scans -o ./out --force
 ```
 
 ---
@@ -105,12 +105,13 @@ This converter implements the parameters required by the Czech national standard
 2. OpenJPEG development/runtime libraries  
 
 **Linux:** `libopenjp2` (`libopenjp2-7`, `libopenjp2-7-dev`)  
-**Windows:** `openjp2.dll` must be available at runtime. You can install [OpenJPEG](https://github.com/uclouvain/openjpeg/releases) simply by unzipping it next to `tif2jp2.exe`.  
+**Windows:** `openjp2.dll` must be available at runtime. You can install [OpenJPEG](https://github.com/uclouvain/openjpeg/releases) simply by unzipping it next to `tif2jp2.exe`.
+**macOS:** install openjpeg via Homebrew
 
 ---
 
 **Linux (Debian / Ubuntu):**
-
+*(has not been tested yet)*
 ```bash
 sudo apt-get update
 sudo apt-get install -y libopenjp2-7 libopenjp2-7-dev
@@ -131,6 +132,18 @@ $env:RUSTFLAGS="-C target-cpu=native"; cargo build --release
 ⚠️ **Windows note:** If you see  
 `The code execution cannot proceed because openjp2.dll was not found`,  
 place `openjp2.dll` next to `tif2jp2.exe` or add its folder to your PATH.
+
+**macOS (ARM)**
+```
+brew update
+brew upgrade
+brew install openjpeg
+git clone https://github.com/bezverec/tif2jp2.git
+cd tif2jp2
+cargo build --release
+# binary at target/release/tif2jp2
+```
+⚠️ **macOS note:** You may get AVX2 warnings after compilation, which is to be expected.
 
 ---
 
