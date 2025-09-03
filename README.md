@@ -106,7 +106,7 @@ This converter implements the parameters required by the Czech national standard
 ---
 
 **Linux (Debian / Ubuntu):**
-*(has not been tested yet)*
+
 ```bash
 sudo apt-get update
 git clone https://github.com/bezverec/tif2jp2.git
@@ -124,7 +124,7 @@ $env:RUSTFLAGS="-C target-cpu=native"; cargo build --release
 # binary at target\release\tif2jp2.exe
 ```
 
-**macOS (ARM)**
+**macOS (ARM):**
 ```
 brew update
 brew upgrade
