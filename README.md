@@ -16,7 +16,7 @@ TIFF to JPEG2000 (JP2) lossless converter built in Rust with a thin FFI layer ov
 
 # Notice
 
-Only Windows version has been somewhat tested so far. Only parts of the desired goals have been achieved. This is a hobby project written for educational purposes.
+Only Windows version has been somewhat tested so far. Only parts of the desired goals have been achieved. This is a hobby project written for educational purposes. In it's current state it is not intended as a production use tool.
 
 ---
 
