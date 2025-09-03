@@ -1,5 +1,5 @@
 # tif2jp2 
-![version](https://img.shields.io/badge/dynamic/toml?url=https://raw.githubusercontent.com/bezverec/tif2jp2/main/Cargo.toml&query=$.package.version&label=version&prefix=v)
+![version](https://img.shields.io/badge/dynamic/toml?url=https://raw.githubusercontent.com/bezverec/tif2jp2/main/Cargo.toml&query=$.package.version&label=version&prefix=v) ![GitHub license](https://img.shields.io/github/license/bezverec/tif2jp2)
 
 TIFF to JPEG2000 (JP2) lossless converter built in Rust with a thin FFI layer over OpenJPEG.
 
