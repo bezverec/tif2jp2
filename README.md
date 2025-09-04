@@ -7,7 +7,7 @@ TIFF to JPEG2000 (JP2) lossless converter built in Rust with a thin FFI layer ov
 
 # Notice
 
-Only Windows version has been somewhat tested so far. Only parts of the desired goals have been achieved. This is a hobby project written for educational purposes. In it's current state it is not intended as a production use tool. The validity of the output files has not yet been established.
+Only Windows version has been somewhat tested so far. I have also been able to run it on Linux and macOS. Only parts of the desired goals have been achieved. This is a hobby project written for educational purposes. In it's current state it is not intended as a production use tool. The validity of the output files has not yet been fully established, I have only achieved jpylyzer validity. You may experience various bugs, inconsistencies, Czech language left overs, AI slop and other problems.
 
 ---
 
@@ -69,23 +69,21 @@ This converter implements the parameters required by the Czech national standard
 
 | Parameter | Standard | Implemented |
 |-----------|----------|-------------|
-| Compression | Lossless | ✅ 5/3 reversible |
+| Compression | Lossless 5/3 reversible | ✅ |
 | Transform | 5-3 filter | ✅ |
 | Layers | 1 | ✅ |
-| Tiling | 4096×4096 | ✅ (`--tile 4096x4096`) |
+| Tiling | 4096×4096 | ✅ |
 | Progression order | RPCL | ✅ |
-| Decomposition levels | 5 or 6 | ✅ (`--levels`) |
-| Code-block size | 64×64 | ✅ (`--block 64x64`) |
-| Precincts | 256×256, 128×128 | ✅ (via `fill_precincts`) |
-| SOP markers | Yes | ✅ (default on) |
-| EPH markers | Yes | ✅ (default on) |
-| Tile-parts (R) | Yes | ✅ (default on) |
-| ICC profiles | Yes | ✅ (from TIFF or `--icc`) |
-| ROI | No | ✅ (disabled) |
-| Embedded metadata | No | ✅ (only optional XMP if `--xmp-dpi`) |
-| TLM markers | Yes | ❌ not available in current OpenJPEG Rust bindings |
-
-⚠️ **Note:** TLM (Tile-part Length Markers) are part of the standard but cannot be enabled via the current `openjpeg_sys` bindings, as the `cp_tlm` field is missing. All other parameters are fully supported.
+| Decomposition levels | 5 or 6 | ✅ |
+| Code-block size | 64×64 | ✅ |
+| Precincts | 256×256, 128×128 | ✅ |
+| SOP markers | Yes | ✅ |
+| EPH markers | Yes | ✅ |
+| Tile-parts (R) | Yes | ✅ |
+| ICC profiles | Yes | ✅ |
+| ROI | No | ✅ |
+| Embedded metadata | No | ✅ |
+| TLM markers | Yes | ✅ |
 
 ---
 
@@ -140,38 +138,44 @@ tif2jp2 --help
 ```
 TIFF to JPEG2000 (JP2) lossless via OpenJPEG FFI
 
-Usage: tif2jp2 [OPTIONS] <INPUT>
+Usage: tif2jp2.exe [OPTIONS] <INPUT>
 
 Arguments:
   <INPUT>  Input file or directory (use --recursive for subdirectories)
 
 Options:
-  -o, --output <OUTPUT>   Output file or directory (mirrors input structure if directory)
-      --recursive         Recursively traverse the input directory
-      --tile <WxH>        Tile size, e.g. 1024x1024 [default: 1024x1024]
-      --block <WxH>       Code-block size, e.g. 64x64 [default: 64x64]
-      --levels <NUM|auto> Number of resolutions [default: auto]
-      --order <ORDER>     Progression order (LRCP|RLCP|RPCL|PCRL|CPRL) [default: RPCL]
-      --force             Overwrite existing output files
-      --threads <N>       OpenJPEG threads (0 = auto = all cores) [default: 0]
-      --icc <PATH>        Path to ICC profile (overrides ICC detected in TIFF)
-      --dpi-box           Write DPI into JP2 'res' box [default: on]
-      --no-dpi-box        Disable Write DPI into JP2 'res' box
-      --xmp-dpi           Write DPI into XMP 'uuid' box [default: on]
-      --no-xmp-dpi        Disable Write DPI into XMP 'uuid' box
-      --avx2              Enable AVX2 fast path if supported [default: off]
-      --no-avx2           Force no AVX2
-      --sop               Enable SOP markers [default: on]
-      --no-sop            Disable SOP markers
-      --eph               Enable EPH markers [default: on]
-      --no-eph            Disable EPH markers
-      --precincts         Enable precinct partitioning (256x256, 128x128)
-      --tp-r              Enable tile-parts split by resolution (R)
-      --mct               Enable reversible MCT for RGB [default: on]
-      --no-mct            Disable MCT
-  -v, --verbose...        Increase verbosity (-v, -vv). 0 = errors only.
-      --help              Print help
-      --version           Print version
+  -o, --output <OUTPUT>      Output file or directory (mirrors input structure if directory)
+      --recursive            Recursively traverse the input directory
+      --tile <WxH>           Tile size, e.g. 1024x1024 [default: 4096x4096]
+      --block <WxH>          Code-block size, e.g. 64x64 [default: 64x64]
+      --levels <NUM|auto>    Number of resolutions [default: 6]
+      --force                Overwrite existing output files
+      --threads <N>          OpenJPEG threads (0 = auto = all cores) [default: 0]
+      --icc <PATH>           Path to ICC profile (overrides ICC detected in TIFF)
+      --order <ORDER>        Progression order (LRCP|RLCP|RPCL|PCRL|CPRL) [default: RPCL]
+      --archival-master-ndk  Archival master NDK preset (alias: --archival). Forces RPCL, 4096x4096 tiles, 64x64 blocks, levels=6, SOP/EPH on, precincts on (256..128), tile-parts R, reversible MCT on, TLM on
+      --dpi-box              Write DPI into JP2 'res' box [default: on]
+      --no-dpi-box           Disable Write DPI into JP2 'res' box
+      --xmp-dpi              Write DPI into XMP 'uuid' box [default: on]
+      --no-xmp-dpi           Disable Write DPI into XMP 'uuid' box
+      --avx2                 Enable AVX2 fast path if supported [default: off]
+      --no-avx2              Force no AVX2
+      --tp-r                 Enable tile-parts split by Resolution (R) [default: on]
+      --no-tp-r              Disable tile-parts split by Resolution (R)
+      --precincts            Enable precinct partitioning (256x256 … 128x128) [default: on]
+      --no-precincts         Disable precinct partitioning
+      --sop                  Enable SOP markers (Start of Packet) [default: on]
+      --no-sop               Disable SOP markers
+      --eph                  Enable EPH markers (End of Packet Header) [default: on]
+      --no-eph               Disable EPH markers
+      --mct                  Enable reversible MCT for RGB [default: on]
+      --no-mct               Disable reversible MCT for RGB
+      --tlm                  Enable TLM markers (Tile-part Length) [NDK preset: on]
+      --no-tlm               Disable TLM markers
+      --plt                  Enable PLT markers (Packet Length in TPH) [default: off]
+      --no-plt               Disable PLT markers
+  -h, --help                 Print help
+  -V, --version              Print version
 ```
 
 ---
@@ -244,11 +248,7 @@ Converter automatically converts TIFF resolution units (inch/cm) → pixels-per-
 
 - `"No input TIFFs found"` → check path or use `--recursive`  
 - `"File is not a TIFF"` → only `.tif`/`.tiff` supported  
-- **Missing OpenJPEG** → install `openjp2.dll` (Windows) or `libopenjp2` (Linux)  
 - **Unsupported** → CMYK & alpha channels not supported (convert first)  
-
-**Windows DLL errors:**  
-Put `openjp2.dll` next to exe or add its folder to PATH.
 
 ---
 
