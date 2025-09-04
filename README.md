@@ -44,24 +44,6 @@ On Windows you can use absolute path (e.g. `.\tif2jp2.exe input.tif`), if tif2jp
 ```bash
 ./tif2jp2 ./scans -o ./out --force
 ```
-
----
-
-## Features
-
-- **Lossless JP2**: OpenJPEG reversible 5/3 transform (irreversible = 0)  
-- **DPI preservation**: Writes resolution to JP2 `res` box (optionally XMP)  
-- **ICC attachment**: Embeds ICC from TIFF or `--icc` file  
-- **Tiling & code-blocks**: `--tile WxH`, `--block WxH` for efficient encoding  
-- **Precincts**: 256×256 for higher resolutions, 128×128 for lowest  
-- **SOP/EPH markers**: Enabled by default (`--no-sop`, `--no-eph` to disable)  
-- **Tile-parts R**: Enabled by default (`--no-tp-r` to disable)  
-- **MCT**: Reversible MCT for RGB (`--no-mct` to disable)  
-- **Multi-threaded**: `--threads` sets worker threads (0 = auto)  
-- **AVX2 upload**: Accelerated buffer upload (`--avx2`)  
-- **Smart file handling**: Skips existing files unless `--force`  
-- **Robust error handling**: Continues even if some files fail  
-
 ---
 ## Compliance with the Czech Archival Standard (NDK)
 
