@@ -108,7 +108,6 @@ cd tif2jp2
 RUSTFLAGS="-C target-cpu=native" cargo build --release
 # binary at target/release/tif2jp2
 ```
-⚠️ **macOS note:** You may get AVX2 warnings after compilation, which is to be expected.
 
 ---
 
