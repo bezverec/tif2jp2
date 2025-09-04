@@ -26,4 +26,3 @@ panic = "abort"
 
 [features]
 default = []
-
