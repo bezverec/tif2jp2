@@ -206,13 +206,6 @@ tif2jp2 scan.tif -o scan.jp2 -vv
 
 ## Metadata Handling
 
-### DPI / Resolution
-- JP2 Resolution Box (`--dpi-box`) → embeds DPI in standard res box  
-- XMP Fallback (`--xmp-dpi`) → adds XMP metadata  
-
-Both are **disabled by default**.  
-Converter automatically converts TIFF resolution units (inch/cm) → pixels-per-meter.
-
 ### ICC Profiles
 - **Automatic**: extracted from TIFF if present  
 - **Manual override**: `--icc profile.icc`  
