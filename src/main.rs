@@ -13,6 +13,9 @@ use tiff::tags::Tag;
 use tiff::ColorType;
 use walkdir::WalkDir;
 
+use std::ffi::c_char;
+use openjpeg_sys::opj_encoder_set_extra_options;
+
 use libc::malloc;
 
 use openjpeg_sys::{
@@ -83,7 +86,7 @@ pub struct Args {
     pub order: String,
 
     /// Archival master NDK preset (alias: --archival). Forces RPCL, 4096x4096 tiles, 64x64 blocks,
-    /// levels=6, SOP/EPH on, precincts on (256..128), tile-parts R, reversible MCT on.
+    /// levels=6, SOP/EPH on, precincts on (256..128), tile-parts R, reversible MCT on, TLM on.
     #[arg(long = "archival-master-ndk", alias = "archival", action = ArgAction::SetTrue)]
     pub archival_master_ndk: bool,
 
@@ -150,6 +153,21 @@ pub struct Args {
     /// keep long form working but hidden (prevents '--verbose...' in help)
     #[arg(long = "verbose", hide = true)]
     pub verbose: u8,
+
+    /// Enable TLM markers (Tile-part Length) [NDK preset: on]
+    #[arg(long = "tlm", action = ArgAction::SetTrue, overrides_with = "no-tlm")]
+    pub tlm_on: bool,
+    /// Disable TLM markers
+    #[arg(long = "no-tlm", action = ArgAction::SetTrue, overrides_with = "tlm")]
+    pub tlm_off: bool,
+
+    /// Enable PLT markers (Packet Length in TPH) [default: off]
+    #[arg(long = "plt", action = ArgAction::SetTrue, overrides_with = "no-plt")]
+    pub plt_on: bool,
+    /// Disable PLT markers
+    #[arg(long = "no-plt", action = ArgAction::SetTrue, overrides_with = "plt")]
+    pub plt_off: bool,
+
 }
 
 // Normalized config used in the program
@@ -162,6 +180,8 @@ pub struct Effective {
     pub sop: bool,       // default: true
     pub eph: bool,       // default: true
     pub mct: bool,       // default: true
+    pub tlm: bool,       // default: true
+    pub plt: bool,       // default: false
 }
 impl Args {
     pub fn effective(&self) -> Effective {
@@ -178,8 +198,10 @@ impl Args {
         let sop       = resolve(self.sop_on,       self.sop_off,       true);
         let eph       = resolve(self.eph_on,       self.eph_off,       true);
         let mct       = resolve(self.mct_on,       self.mct_off,       true);
+        let tlm       = resolve(self.tlm_on, self.tlm_off, true);   // NDK default: ON
+        let plt       = resolve(self.plt_on, self.plt_off, false);  // default: OFF
 
-        Effective { avx2, dpi_box, xmp_dpi, tp_r, precincts, sop, eph, mct }
+        Effective { avx2, dpi_box, xmp_dpi, tp_r, precincts, sop, eph, mct, tlm, plt }
     }
 }
 
@@ -197,7 +219,6 @@ fn apply_archival_master_ndk_defaults(args: &mut Args) {
     args.avx2_on      = args.avx2_on; // nezměněno, aby uživatelský přepínač platil
 
     // Tile-parts by Resolution (R)
-    // Pozor: máš dvojici --tp-r / --no-tp-r v podobě tp_r_on/tp_r_off
     args.tp_r_on  = true;  args.tp_r_off  = false;
 
     // Precincts 256..128
@@ -210,7 +231,11 @@ fn apply_archival_master_ndk_defaults(args: &mut Args) {
     // Reversible MCT for RGB
     args.mct_on = true; args.mct_off = false;
 
-    // Threads necháme na 0 (= auto) – už default
+    // NEW: TLM ON, PLT OFF (tvrdě, ve stylu původního kódu)
+    args.tlm_on = true;  args.tlm_off = false;
+    args.plt_on = false; args.plt_off = true;
+
+    // Threads necháváme na 0 (= auto) – už default
     // args.threads = 0;
 }
 
@@ -477,41 +502,62 @@ fn dpi_to_ppm(dpi: f64, unit: PpmUnit) -> f64 {
     match unit { PpmUnit::Inch => dpi / 0.0254, PpmUnit::Centimeter => dpi / 0.01 }
 }
 
-/// Find (num, den, exp) for JP2 rational-with-decimal-exponent (16/16/8-bit),
-/// approximating a floating ppm value within the allowed ranges.
+/// Převod ppm na JP2 trojici (N,D,E) s preferencí E=0.
+/// ppm = N / D * 10^E, kde N,D ∈ [1..=65535], E ∈ [0..=6]
 fn ppm_to_jp2_triplet(ppm: f64) -> (u16, u16, u8) {
+    if !ppm.is_finite() || ppm <= 0.0 {
+        return (1, 1, 0);
+    }
+
+    // 1) Zkus E=0 s "hezkými" jmenovateli – co nejpřesnější aproximace
+    let dens = [1u32, 10, 100, 1000, 10000, 65535];
     let mut best = (0u16, 1u16, 0u8);
     let mut err_best = f64::INFINITY;
-    for exp in 0..6u8 {
-        let target = ppm / 10f64.powi(exp as i32);
-        for &den in &[1u32, 10, 100, 1000, 10000, 65535] {
-            let numf = target * (den as f64);
-            if numf <= 0.0 { continue; }
-            let num = numf.round() as i64;
-            if num <= 0 || num > 65535 { continue; }
-            let approx = (num as f64) / (den as f64) * 10f64.powi(exp as i32);
+    for &den in &dens {
+        let numf = ppm * den as f64;
+        if numf > 0.0 && numf <= 65535.0 {
+            let num = numf.round();
+            let approx = num / den as f64;
             let err = (approx - ppm).abs();
             if err < err_best {
-                err_best = err; best = (num as u16, den as u16, exp);
-                if err < 1e-6 { return best; }
+                err_best = err;
+                best = (num as u16, den as u16, 0);
+                if err < 1e-6 {
+                    return best;
+                }
             }
         }
     }
-    best
+    if best.0 != 0 {
+        return best;
+    }
+
+    // 2) Když je ppm moc velké, zvyšuj E, ať se N vejde do 16 bitů
+    let mut val = ppm;
+    let mut e: u8 = 0;
+    while val > 65535.0 && e < 6 {
+        val /= 10.0;
+        e += 1;
+    }
+    let n = val.round().clamp(1.0, 65535.0) as u16;
+    (n, 1, e)
 }
 
-/// Serialize payload for 'resc'/'resd' (vertical/horizontal ppm and exponent).
+/// Payload 'resc'/'resd' – pořadí: vN vD hN hD vE hE  (celkem 2+2+2+2+1+1 = 10 bajtů)
 fn build_resc_resd_payload(v_ppm: f64, h_ppm: f64) -> Vec<u8> {
-    let (vrn, vrd, vre) = ppm_to_jp2_triplet(v_ppm);
-    let (hrn, hrd, hre) = ppm_to_jp2_triplet(h_ppm);
-    let mut v = Vec::with_capacity(2+2+1 + 2+2+1 + 1);
-    v.extend_from_slice(&vrn.to_be_bytes());
-    v.extend_from_slice(&vrd.to_be_bytes());
-    v.push(vre);
-    v.extend_from_slice(&hrn.to_be_bytes());
-    v.extend_from_slice(&hrd.to_be_bytes());
-    v.push(hre);
-    v.push(0); // reserved
+    let (v_n, v_d, v_e) = ppm_to_jp2_triplet(v_ppm);
+    let (h_n, h_d, h_e) = ppm_to_jp2_triplet(h_ppm);
+
+    let mut v = Vec::with_capacity(10);
+    // vN, vD
+    v.extend_from_slice(&v_n.to_be_bytes());
+    v.extend_from_slice(&v_d.to_be_bytes());
+    // hN, hD
+    v.extend_from_slice(&h_n.to_be_bytes());
+    v.extend_from_slice(&h_d.to_be_bytes());
+    // vE, hE
+    v.push(v_e);
+    v.push(h_e);
     v
 }
 
@@ -761,6 +807,37 @@ fn fill_precincts(enc: &mut openjpeg_sys::opj_cparameters_t, levels: u32, cblk_w
     }
 }
 
+/// Nastaví volitelné J2K markery přes OpenJPEG "extra options".
+/// Funguje v OpenJPEG >= 2.4 (symbol `opj_encoder_set_extra_options`).
+fn set_openjpeg_extra_options(codec: *mut opj_codec_t, eff: &Effective) -> Result<()> {
+    // Pozn.: CString musíme udržet naživu po dobu volání (držíme je ve vektoru).
+    let mut cstrs: Vec<std::ffi::CString> = Vec::new();
+
+    if eff.tlm {
+        // TLM = Tile-part Length Marker v JP2/JPX – přidá tabulku délek tile-partů.
+        cstrs.push(std::ffi::CString::new("TLM=YES").unwrap());
+    }
+    if eff.plt {
+        // PLT = Packet Length Marker v Tile-Part Headeru – zapisuje délky packetů.
+        cstrs.push(std::ffi::CString::new("PLT=YES").unwrap());
+    }
+
+    // Pokud není co nastavovat, skončíme bez chyby.
+    if cstrs.is_empty() {
+        return Ok(());
+    }
+
+    // Převedeme na pole ukazatelů a zakončíme NULLem (OpenJPEG očekává NULL-terminated seznam).
+    let mut ptrs: Vec<*const c_char> = cstrs.iter().map(|s| s.as_ptr()).collect();
+    ptrs.push(std::ptr::null());
+
+    let ok = unsafe { opj_encoder_set_extra_options(codec, ptrs.as_ptr()) } != 0;
+    if !ok {
+        return Err(anyhow!("opj_encoder_set_extra_options failed (TLM/PLT)"));
+    }
+    Ok(())
+}
+
 // --- Main conversion -----------------------------------------------------------
 
 fn convert_one(input: &Path, output: &Path, args: &Args) -> Result<()> {
@@ -977,6 +1054,12 @@ fn convert_one(input: &Path, output: &Path, args: &Args) -> Result<()> {
             opj_image_destroy(img); 
         }
         return Err(anyhow!("opj_setup_encoder failed"));
+    }
+    // ---- Extra options: TLM/PLT --------------------------------------------------
+    if let Err(e) = set_openjpeg_extra_options(codec, &eff) {
+        // Uvolnit dříve alokované zdroje a vrátit chybu
+        unsafe { opj_destroy_codec(codec); opj_image_destroy(img); }
+        return Err(e);
     }
 
     eprintln!("  [DEBUG] Creating output stream");
