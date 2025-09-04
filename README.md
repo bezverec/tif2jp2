@@ -66,6 +66,8 @@ On Windows you can use absolute path (e.g. `.\tif2jp2.exe input.tif`), if tif2jp
 ## Compliance with the Czech Archival Standard (NDK)
 
 This converter implements the parameters required by the Czech national standard for archival JPEG2000 masters:
+- on by default
+- cab be also enforced with flag `--archival-master-ndk` or `--archival`
 
 | Parameter | Standard | Implemented |
 |-----------|----------|-------------|
@@ -225,7 +227,7 @@ tif2jp2 scan.tif -o scan.jp2 -vv
 - JP2 Resolution Box (`--dpi-box`) → embeds DPI in standard res box  
 - XMP Fallback (`--xmp-dpi`) → adds XMP metadata  
 
-Both are **enabled by default**.  
+Both are **disabled by default**.  
 Converter automatically converts TIFF resolution units (inch/cm) → pixels-per-meter.
 
 ### ICC Profiles
