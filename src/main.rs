@@ -1252,10 +1252,6 @@ fn fill_components_u16(
     ch: u32,
     use_avx2: bool,
 ) -> Result<()> {
-    // Silence “unused variable” on ARM/aarch64 etc.
-    #[cfg(not(target_arch = "x86_64"))]
-    let _ = use_avx2;
-
     let plane = (w as usize) * (h as usize);
     unsafe {
         if ch == 1 {
