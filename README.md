@@ -71,7 +71,7 @@ This converter implements the parameters required by the Czech national standard
 
 | Parameter | Standard | Implemented |
 |-----------|----------|-------------|
-| Compression | Lossless 5/3 reversible | ✅ |
+| Compression | Lossless | ✅ |
 | Transform | 5-3 filter | ✅ |
 | Layers | 1 | ✅ |
 | Tiling | 4096×4096 | ✅ |
