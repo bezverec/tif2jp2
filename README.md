@@ -140,7 +140,7 @@ Options:
       --archival-master-ndk  Archival master NDK preset (alias: --archival). Forces RPCL, 4096x4096 tiles, 64x64 blocks, levels=6, SOP/EPH on, precincts on (256..128), tile-parts R, reversible MCT on, TLM on
       --dpi-box              Write DPI into JP2 'res' box [default: on]
       --no-dpi-box           Disable Write DPI into JP2 'res' box
-      --xmp-dpi              Write DPI into XMP 'uuid' box [default: on]
+      --xmp-dpi              Write DPI into XMP 'uuid' box [default: off]
       --no-xmp-dpi           Disable Write DPI into XMP 'uuid' box
       --avx2                 Enable AVX2 fast path if supported [default: off]
       --no-avx2              Force no AVX2
