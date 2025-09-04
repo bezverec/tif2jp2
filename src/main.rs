@@ -99,7 +99,7 @@ pub struct Args {
     #[arg(long = "no-dpi-box", action = ArgAction::SetTrue, overrides_with = "dpi-box")]
     pub dpi_box_off: bool,
 
-    /// Write DPI into XMP 'uuid' box [default: on]
+    /// Write DPI into XMP 'uuid' box [default: off]
     #[arg(long = "xmp-dpi", action = ArgAction::SetTrue, overrides_with = "no-xmp-dpi")]
     pub xmp_dpi_on: bool,
     /// Disable Write DPI into XMP 'uuid' box
@@ -174,7 +174,7 @@ pub struct Args {
 pub struct Effective {
     pub avx2: bool,      // default: false
     pub dpi_box: bool,   // default: true
-    pub xmp_dpi: bool,   // default: true
+    pub xmp_dpi: bool,   // default: false
     pub tp_r: bool,      // default: true
     pub precincts: bool, // default: true
     pub sop: bool,       // default: true
@@ -191,7 +191,7 @@ impl Args {
         }
 
         let dpi_box   = resolve(self.dpi_box_on,   self.dpi_box_off,   true);
-        let xmp_dpi   = resolve(self.xmp_dpi_on,   self.xmp_dpi_off,   true);
+        let xmp_dpi   = resolve(self.xmp_dpi_on,   self.xmp_dpi_off,   false);
         let avx2      = resolve(self.avx2_on,      self.avx2_off,      false);
         let tp_r      = resolve(self.tp_r_on,      self.tp_r_off,      true);
         let precincts = resolve(self.precincts_on, self.precincts_off, true);
@@ -214,7 +214,7 @@ fn apply_archival_master_ndk_defaults(args: &mut Args) {
 
     // Ensure toggles are ON (use the “on/off” páry správně)
     args.dpi_box_on   = true;  args.dpi_box_off   = false;
-    args.xmp_dpi_on   = true;  args.xmp_dpi_off   = false;
+    args.xmp_dpi_on   = false;  args.xmp_dpi_off   = false;
     args.avx2_off     = false; // AVX2 necháváme na uživateli (výchozí off). Přes --avx2 zapne.
     args.avx2_on      = args.avx2_on; // nezměněno, aby uživatelský přepínač platil
 
