@@ -1009,7 +1009,7 @@ fn convert_one(input: &Path, output: &Path, args: &Args) -> Result<()> {
 
     // Enable tile-parts with R split order (by resolution)
     enc_params.tp_on = 1;
-    enc_params.tp_flag = b'R' as i8;
+    enc_params.tp_flag = b'R' as _;
 
     // Enable reversible MCT for RGB if allowed
     if rgb && eff.mct { enc_params.tcp_mct = 1; }
@@ -1022,7 +1022,7 @@ fn convert_one(input: &Path, output: &Path, args: &Args) -> Result<()> {
     }
 
     // Enable tile-parts with R split order (by resolution)
-    if eff.tp_r { enc_params.tp_on = 1; enc_params.tp_flag = b'R' as i8; }
+    if eff.tp_r { enc_params.tp_on = 1; enc_params.tp_flag = b'R' as _; }
 
 
     // Single quality layer, explicitly lossless
@@ -1252,6 +1252,10 @@ fn fill_components_u16(
     ch: u32,
     use_avx2: bool,
 ) -> Result<()> {
+    // Silence “unused variable” on ARM/aarch64 etc.
+    #[cfg(not(target_arch = "x86_64"))]
+    let _ = use_avx2;
+
     let plane = (w as usize) * (h as usize);
     unsafe {
         if ch == 1 {
