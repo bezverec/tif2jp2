@@ -8,11 +8,11 @@ description = "TIFF to JPEG2000 (JP2) lossless converter via OpenJPEG"
 
 [dependencies]
 anyhow = "1"
-thiserror = "1"
+thiserror = "2.0.16"
 clap = { version = "4.5", features = ["derive"] }
-tiff = "0.9"
+tiff = "0.10.3"
 openjpeg-sys = "1.0.12"
-which = "6"
+which = "8.0.0"
 walkdir = "2"
 libc = "0.2"
 rayon = "1"
@@ -26,3 +26,4 @@ panic = "abort"
 
 [features]
 default = []
+
