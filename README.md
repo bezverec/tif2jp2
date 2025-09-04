@@ -214,8 +214,7 @@ tif2jp2 scan.tif -o scan.jp2 -vv
 ---
 
 ## Performance Tips
-- **Threading**: `--threads 0` (default, auto-detect cores)  
-- **Tiling**: larger tiles (`--tile 2048x2048`) help large images  
+- **Threading**: `--threads 0` (default, auto-detect cores)    
 - **AVX2**: enable `--avx2` for faster buffer processing  
 - **Batch**: skips already processed files unless `--force`  
 
