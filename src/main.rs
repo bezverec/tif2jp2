@@ -661,17 +661,18 @@ fn append_jp2_xmp_box(path: &Path, xmp_xml: &[u8]) -> Result<()> {
 
 // --- AVX2 fast paths -----------------------------------------------------------
 
+// x86_64: wrapper with runtime AVX2 check
 #[cfg(target_arch = "x86_64")]
 #[inline]
 fn widen_u16_to_i32_avx2(src: &[u16], dst: &mut [i32]) -> bool {
-    if !std::is_x86_feature_detected!("avx2") { return false; }
+    if !std::is_x86_feature_detected!("avx2") {
+        return false;
+    }
     unsafe { widen_u16_to_i32_avx2_inner(src, dst) }
     true
 }
-#[cfg(not(target_arch = "x86_64"))]
-#[inline]
-fn widen_u16_to_i32_avx2(_src: &[u16], _dst: &mut [i32]) -> bool { false }
 
+// x86_64: AVX2 implementation
 #[cfg(target_arch = "x86_64")]
 #[allow(unsafe_op_in_unsafe_fn)]
 #[target_feature(enable = "avx2")]
@@ -681,24 +682,24 @@ unsafe fn widen_u16_to_i32_avx2_inner(src: &[u16], dst: &mut [i32]) {
     let n = src.len();
 
     while i + 16 <= n {
-        unsafe {
-            // Load 16×u16 as two 128-bit lanes
-            let base_u16 = src.as_ptr();
-            let lo128 = _mm_loadu_si128(base_u16.cast::<__m128i>().add(i));
-            let hi128 = _mm_loadu_si128(base_u16.cast::<__m128i>().add(i + 8));
-            // Widen to i32 vectors
-            let lo = _mm256_cvtepu16_epi32(lo128);
-            let hi = _mm256_cvtepu16_epi32(hi128);
-            // Store to destination
-            let base_i32 = dst.as_mut_ptr();
-            _mm256_storeu_si256(base_i32.cast::<__m256i>().add(i), lo);
-            _mm256_storeu_si256(base_i32.cast::<__m256i>().add(i + 8), hi);
-        }
+        // Load 16×u16 as two 128-bit lanes
+        let base_u16 = src.as_ptr();
+        let lo128 = _mm_loadu_si128(base_u16.cast::<__m128i>().add(i));
+        let hi128 = _mm_loadu_si128(base_u16.cast::<__m128i>().add(i + 8));
+        // Widen to i32 vectors
+        let lo = _mm256_cvtepu16_epi32(lo128);
+        let hi = _mm256_cvtepu16_epi32(hi128);
+        // Store to destination
+        let base_i32 = dst.as_mut_ptr();
+        _mm256_storeu_si256(base_i32.cast::<__m256i>().add(i), lo);
+        _mm256_storeu_si256(base_i32.cast::<__m256i>().add(i + 8), hi);
         i += 16;
     }
 
     // Scalar tail
-    for k in i..n { dst[k] = src[k] as i32; }
+    for k in i..n {
+        dst[k] = src[k] as i32;
+    }
 }
 
 /// AVX2 de-interleave for **RGB8 one row**, 8 pixels per iteration using gathers.
@@ -1133,6 +1134,7 @@ fn convert_one(input: &Path, output: &Path, args: &Args) -> Result<()> {
 /// Fast paths:
 ///   • Gray8: simple copy (auto-vectorized)
 ///   • RGB8: parallel rows via rayon; AVX2 gather path if enabled
+#[cfg_attr(not(target_arch = "x86_64"), allow(unused_variables))]
 fn fill_components_u8(
     img: *mut opj_image_t,
     inter: &[u8],
@@ -1244,6 +1246,7 @@ fn fill_components_u8(
 /// Fast paths:
 ///  - Gray16: AVX2 widen to i32 if available
 ///  - RGB16: parallel rows via rayon (scalar widen)
+#[cfg_attr(not(target_arch = "x86_64"), allow(unused_variables))]
 fn fill_components_u16(
     img: *mut opj_image_t,
     inter: &[u16],
@@ -1252,6 +1255,10 @@ fn fill_components_u16(
     ch: u32,
     use_avx2: bool,
 ) -> Result<()> {
+    // Silence “unused variable” on ARM/aarch64 etc.
+    #[cfg(not(target_arch = "x86_64"))]
+    let _ = use_avx2;
+
     let plane = (w as usize) * (h as usize);
     unsafe {
         if ch == 1 {
