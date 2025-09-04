@@ -116,13 +116,13 @@ RUSTFLAGS="-C target-cpu=native" cargo build --release
 Run:
 
 ```bash
-tif2jp2 --help
+./tif2jp2 --help
 ```
 
 ```
 TIFF to JPEG2000 (JP2) lossless via OpenJPEG FFI
 
-Usage: tif2jp2.exe [OPTIONS] <INPUT>
+Usage: ./tif2jp2 [OPTIONS] <INPUT>
 
 Arguments:
   <INPUT>  Input file or directory (use --recursive for subdirectories)
