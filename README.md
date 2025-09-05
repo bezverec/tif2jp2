@@ -226,13 +226,13 @@ tif2jp2 scan.tif -o scan.jp2 -vv
 
 - `"No input TIFFs found"` → check path or use `--recursive`  
 - `"File is not a TIFF"` → only `.tif`/`.tiff` supported  
-- **Unsupported** → CMYK & alpha channels not supported (convert first)  
+- **Unsupported** → CMYK & alpha channels (RGBA) not supported (convert to RGB first)  
 
 ---
 
 ## Limitations
 ❌ CMYK color space not supported  
-❌ Alpha channels not supported  
+❌ Alpha channels (RGBA) not supported  
 ❌ Limited to 8/16-bit grayscale or RGB images  
 ❌ Progressive decoding not implemented  
 
