@@ -49,7 +49,7 @@ On Windows you can use absolute path (e.g. `.\tif2jp2.exe input.tif`), if tif2jp
 ## Compliance with the Czech Archival Standard (NDK)
 
 This converter implements the parameters required by the Czech national standard for archival JPEG2000 masters:
-- on by default
+- ON by default
 - cab be also enforced with flag `--archival-master-ndk` or `--archival`
 
 | Parameter | Standard | Implemented |
