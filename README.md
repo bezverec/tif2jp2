@@ -80,7 +80,7 @@ This converter implements the parameters required by the Czech national standard
 
 ---
 
-**Linux (Debian / Ubuntu):**
+**Linux (Debian / Ubuntu / Android Terminal):**
 
 ```bash
 sudo apt-get update
