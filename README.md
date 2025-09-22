@@ -8,7 +8,7 @@ TIFF to JPEG2000 (JP2) lossless converter built in Rust with a thin FFI layer ov
 
 # Notice
 
-Only Windows version has been somewhat tested so far. I have also been able to compile it on Linux, macOS (ARM) and Android 16. Only parts of the desired goals have been achieved. This is a hobby project written for educational purposes. In it's current state it is not intended as a production use tool. The validity of the output files has not yet been fully established, I have only achieved jpylyzer validity. You may experience various bugs, inconsistencies, Czech language left overs, AI slop, unsafe code (this is by design), crashes and other problems.
+Only Windows version has been somewhat tested so far. I have also been able to compile it on Linux, macOS (ARM) and Android 16. Only parts of the desired goals have been achieved. This is a hobby project written for educational purposes. In it's current state it is not intended as a production use tool. The validity of the output files has not yet been fully established, I have only achieved jpylyzer and jhove validity (see below). You may experience various bugs, inconsistencies, Czech language left overs, AI slop, unsafe code (this is by design), crashes and other problems.
 
 ---
 
