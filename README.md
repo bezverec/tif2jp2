@@ -537,3 +537,294 @@ Write-Host "Tip: Archival preset:" -ForegroundColor DarkGray
 Write-Host "  .\bench.ps1 -InputDir . -Recursive -Runs 3 -Archival -Avx2" -ForegroundColor DarkGray
 
 ```
+
+---
+
+## Basic validity
+
+### jhove
+
+```
+Jhove (Rel. 1.34.0, 2025-07-02)
+ Date: 2025-09-22 20:33:31 SELČ
+ RepresentationInformation: .\ilustrovany_zpravodaj_1938-06-23_cislo25_strana3.jp2
+  ReportingModule: JPEG2000-hul, Rel. 1.4.5 (2025-03-12)
+  LastModified: 2025-09-03 21:45:41 SELČ
+  Size: 12563820
+  Format: JPEG 2000
+  Status: Well-Formed and valid
+  SignatureMatches:
+   JPEG2000-hul
+  MIMEtype: image/jp2
+  Profile: JP2
+  JPEG2000Metadata:
+   Brand: jp2
+   MinorVersion: 0
+   Compatibility: jp2
+   ColorspaceUnknown: false
+   CaptureResolution:
+    HorizResolution:
+     Numerator: 46
+     Denominator: 8960
+     Exponent: 0
+    VertResolution:
+     Numerator: 11811
+     Denominator: 1
+     Exponent: 1
+   ColorSpecs:
+    ColorSpec:
+     Method: Enumerated Colorspace
+     Precedence: 0
+     Approx: 0
+     EnumCS: sRGB
+```
+
+### jpylyzer
+
+```
+<?xml version='1.0' encoding='UTF-8'?>
+<jpylyzer xmlns="http://openpreservation.org/ns/jpylyzer/v2/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://openpreservation.org/ns/jpylyzer/v2/ http://jpylyzer.openpreservation.org/jpylyzer-v-2-2.xsd">
+<toolInfo>
+    <toolName>jpylyzer.exe</toolName>
+    <toolVersion>2.2.1</toolVersion>
+</toolInfo>
+<file xmlns:ns0="adobe:ns:meta/" xmlns:ns2="http://ns.adobe.com/tiff/1.0/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+    <fileInfo>
+        <fileName>ilustrovany_zpravodaj_1938-06-23_cislo25_strana3.jp2</fileName>
+        <filePath>G:\temp\jpeg2000\jpylyzer\ilustrovany_zpravodaj_1938-06-23_cislo25_strana3.jp2</filePath>
+        <fileSizeInBytes>12563820</fileSizeInBytes>
+        <fileLastModified>2025-09-03T21:45:41.976863</fileLastModified>
+    </fileInfo>
+    <statusInfo>
+        <success>True</success>
+    </statusInfo>
+    <isValid format="jp2">False</isValid>
+    <tests>
+        <jp2HeaderBox>
+            <resolutionBox>
+                <captureResolutionBox>
+                    <boxLengthIsValid>False</boxLengthIsValid>
+                </captureResolutionBox>
+                <displayResolutionBox>
+                    <boxLengthIsValid>False</boxLengthIsValid>
+                </displayResolutionBox>
+            </resolutionBox>
+        </jp2HeaderBox>
+    </tests>
+    <properties>
+        <signatureBox/>
+        <fileTypeBox>
+            <br>jp2 </br>
+            <minV>0</minV>
+            <cL>jp2 </cL>
+        </fileTypeBox>
+        <jp2HeaderBox>
+            <imageHeaderBox>
+                <height>3129</height>
+                <width>3481</width>
+                <nC>3</nC>
+                <bPCSign>unsigned</bPCSign>
+                <bPCDepth>8</bPCDepth>
+                <c>jpeg2000</c>
+                <unkC>no</unkC>
+                <iPR>no</iPR>
+            </imageHeaderBox>
+            <colourSpecificationBox>
+                <meth>Enumerated</meth>
+                <prec>0</prec>
+                <approx>0</approx>
+                <enumCS>sRGB</enumCS>
+            </colourSpecificationBox>
+            <resolutionBox>
+                <captureResolutionBox>
+                    <vRcN>11811</vRcN>
+                    <vRcD>1</vRcD>
+                    <hRcN>46</hRcN>
+                    <hRcD>8960</hRcD>
+                    <vRcE>1</vRcE>
+                    <hRcE>0</hRcE>
+                    <vRescInPixelsPerMeter>118110.0</vRescInPixelsPerMeter>
+                    <hRescInPixelsPerMeter>0.01</hRescInPixelsPerMeter>
+                    <vRescInPixelsPerInch>2999.99</vRescInPixelsPerInch>
+                    <hRescInPixelsPerInch>0.0</hRescInPixelsPerInch>
+                </captureResolutionBox>
+                <displayResolutionBox>
+                    <vRdN>11811</vRdN>
+                    <vRdD>1</vRdD>
+                    <hRdN>46</hRdN>
+                    <hRdD>8960</hRdD>
+                    <vRdE>1</vRdE>
+                    <hRdE>0</hRdE>
+                    <vResdInPixelsPerMeter>118110.0</vResdInPixelsPerMeter>
+                    <hResdInPixelsPerMeter>0.01</hResdInPixelsPerMeter>
+                    <vResdInPixelsPerInch>2999.99</vResdInPixelsPerInch>
+                    <hResdInPixelsPerInch>0.0</hResdInPixelsPerInch>
+                </displayResolutionBox>
+            </resolutionBox>
+        </jp2HeaderBox>
+        <contiguousCodestreamBox>
+            <siz>
+                <lsiz>47</lsiz>
+                <rsiz>0</rsiz>
+                <capability>ISO/IEC 15444-1</capability>
+                <xsiz>3481</xsiz>
+                <ysiz>3129</ysiz>
+                <xOsiz>0</xOsiz>
+                <yOsiz>0</yOsiz>
+                <xTsiz>4096</xTsiz>
+                <yTsiz>4096</yTsiz>
+                <xTOsiz>0</xTOsiz>
+                <yTOsiz>0</yTOsiz>
+                <numberOfTiles>1</numberOfTiles>
+                <csiz>3</csiz>
+                <ssizSign>unsigned</ssizSign>
+                <ssizDepth>8</ssizDepth>
+                <xRsiz>1</xRsiz>
+                <yRsiz>1</yRsiz>
+                <ssizSign>unsigned</ssizSign>
+                <ssizDepth>8</ssizDepth>
+                <xRsiz>1</xRsiz>
+                <yRsiz>1</yRsiz>
+                <ssizSign>unsigned</ssizSign>
+                <ssizDepth>8</ssizDepth>
+                <xRsiz>1</xRsiz>
+                <yRsiz>1</yRsiz>
+            </siz>
+            <cod>
+                <lcod>18</lcod>
+                <precincts>user defined</precincts>
+                <sop>yes</sop>
+                <eph>yes</eph>
+                <order>RPCL</order>
+                <layers>1</layers>
+                <multipleComponentTransformation>yes</multipleComponentTransformation>
+                <levels>5</levels>
+                <codeBlockWidth>64</codeBlockWidth>
+                <codeBlockHeight>64</codeBlockHeight>
+                <codingBypass>no</codingBypass>
+                <resetOnBoundaries>no</resetOnBoundaries>
+                <termOnEachPass>no</termOnEachPass>
+                <vertCausalContext>no</vertCausalContext>
+                <predTermination>no</predTermination>
+                <segmentationSymbols>no</segmentationSymbols>
+                <transformation>5-3 reversible</transformation>
+                <precinctSizeX>128</precinctSizeX>
+                <precinctSizeY>128</precinctSizeY>
+                <precinctSizeX>256</precinctSizeX>
+                <precinctSizeY>256</precinctSizeY>
+                <precinctSizeX>256</precinctSizeX>
+                <precinctSizeY>256</precinctSizeY>
+                <precinctSizeX>256</precinctSizeX>
+                <precinctSizeY>256</precinctSizeY>
+                <precinctSizeX>256</precinctSizeX>
+                <precinctSizeY>256</precinctSizeY>
+                <precinctSizeX>256</precinctSizeX>
+                <precinctSizeY>256</precinctSizeY>
+            </cod>
+            <qcd>
+                <lqcd>19</lqcd>
+                <qStyle>no quantization</qStyle>
+                <guardBits>2</guardBits>
+                <epsilon>8</epsilon>
+                <epsilon>9</epsilon>
+                <epsilon>9</epsilon>
+                <epsilon>10</epsilon>
+                <epsilon>9</epsilon>
+            </qcd>
+            <com>
+                <lcom>37</lcom>
+                <rcom>ISO/IEC 8859-15 (Latin)</rcom>
+                <comment>Created by OpenJPEG version 2.5.3</comment>
+            </com>
+            <ppmCount>0</ppmCount>
+            <plmCount>0</plmCount>
+            <tileParts>
+                <tilePart>
+                    <sot>
+                        <lsot>10</lsot>
+                        <isot>0</isot>
+                        <psot>17402</psot>
+                        <tpsot>0</tpsot>
+                        <tnsot>6</tnsot>
+                    </sot>
+                    <pltCount>0</pltCount>
+                    <pptCount>0</pptCount>
+                </tilePart>
+                <tilePart>
+                    <sot>
+                        <lsot>10</lsot>
+                        <isot>0</isot>
+                        <psot>50608</psot>
+                        <tpsot>1</tpsot>
+                        <tnsot>6</tnsot>
+                    </sot>
+                    <pltCount>0</pltCount>
+                    <pptCount>0</pptCount>
+                </tilePart>
+                <tilePart>
+                    <sot>
+                        <lsot>10</lsot>
+                        <isot>0</isot>
+                        <psot>209372</psot>
+                        <tpsot>2</tpsot>
+                        <tnsot>6</tnsot>
+                    </sot>
+                    <pltCount>0</pltCount>
+                    <pptCount>0</pptCount>
+                </tilePart>
+                <tilePart>
+                    <sot>
+                        <lsot>10</lsot>
+                        <isot>0</isot>
+                        <psot>833287</psot>
+                        <tpsot>3</tpsot>
+                        <tnsot>6</tnsot>
+                    </sot>
+                    <pltCount>0</pltCount>
+                    <pptCount>0</pptCount>
+                </tilePart>
+                <tilePart>
+                    <sot>
+                        <lsot>10</lsot>
+                        <isot>0</isot>
+                        <psot>3018447</psot>
+                        <tpsot>4</tpsot>
+                        <tnsot>6</tnsot>
+                    </sot>
+                    <pltCount>0</pltCount>
+                    <pptCount>0</pptCount>
+                </tilePart>
+                <tilePart>
+                    <sot>
+                        <lsot>10</lsot>
+                        <isot>0</isot>
+                        <psot>8434126</psot>
+                        <tpsot>5</tpsot>
+                        <tnsot>6</tnsot>
+                    </sot>
+                    <pltCount>0</pltCount>
+                    <pptCount>0</pptCount>
+                </tilePart>
+            </tileParts>
+        </contiguousCodestreamBox>
+        <uuidBox>
+            <ns0:xmpmeta>
+
+
+                <rdf:RDF>
+
+
+                    <rdf:Description ns2:ResolutionUnit="1" ns2:XResolution="300000/1000" ns2:YResolution="300000/1000"/>
+
+
+                </rdf:RDF>
+
+
+            </ns0:xmpmeta>
+        </uuidBox>
+        <compressionRatio>2.6</compressionRatio>
+    </properties>
+    <warnings/>
+</file>
+</jpylyzer>
+```
