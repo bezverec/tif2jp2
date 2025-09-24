@@ -8,7 +8,7 @@ TIFF to JPEG2000 (JP2) lossless converter built in Rust with a thin FFI layer ov
 
 # Notice
 
-Only Windows version has been somewhat tested so far. I have also been able to compile it on Linux, macOS (ARM) and Android 16. Only parts of the desired goals have been achieved. This is a hobby project written for educational purposes. In it's current state it is not intended as a production use tool. The validity of the output files has not yet been fully established, I have only achieved jhove validity (see below). You may experience various bugs, inconsistencies, Czech language left overs, AI slop, unsafe code (this is by design), crashes and other problems.
+Only Windows version has been somewhat tested so far. I have also been able to compile it on Linux, macOS (ARM) and Android 16. Only parts of the desired goals have been achieved. This is a hobby project written for educational purposes. In it's current state it is not intended as a production use tool. The validity of the output files has not yet been fully established, I have only achieved jhove and jpylyzer validity (see below). You may experience various bugs, inconsistencies, Czech language left overs, AI slop, unsafe code (this is by design), crashes and other problems.
 
 ---
 
@@ -582,6 +582,7 @@ Jhove (Rel. 1.34.0, 2025-07-02)
 ### jpylyzer
 
 ```
+PS C:\temp\jpeg2000\target\release\jpylyzer_2.2.1_win64\jpylyzer> ./jpylyzer.exe 0001.jp2
 <?xml version='1.0' encoding='UTF-8'?>
 <jpylyzer xmlns="http://openpreservation.org/ns/jpylyzer/v2/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://openpreservation.org/ns/jpylyzer/v2/ http://jpylyzer.openpreservation.org/jpylyzer-v-2-2.xsd">
 <toolInfo>
@@ -590,27 +591,16 @@ Jhove (Rel. 1.34.0, 2025-07-02)
 </toolInfo>
 <file xmlns:ns0="adobe:ns:meta/" xmlns:ns2="http://ns.adobe.com/tiff/1.0/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
     <fileInfo>
-        <fileName>ilustrovany_zpravodaj_1938-06-23_cislo25_strana3.jp2</fileName>
-        <filePath>G:\temp\jpeg2000\jpylyzer\ilustrovany_zpravodaj_1938-06-23_cislo25_strana3.jp2</filePath>
-        <fileSizeInBytes>12563820</fileSizeInBytes>
-        <fileLastModified>2025-09-03T21:45:41.976863</fileLastModified>
+        <fileName>0001.jp2</fileName>
+        <filePath>C:\temp\jpeg2000\target\release\jpylyzer_2.2.1_win64\jpylyzer\0001.jp2</filePath>
+        <fileSizeInBytes>29390238</fileSizeInBytes>
+        <fileLastModified>2025-09-04T13:07:01.419524</fileLastModified>
     </fileInfo>
     <statusInfo>
         <success>True</success>
     </statusInfo>
-    <isValid format="jp2">False</isValid>
-    <tests>
-        <jp2HeaderBox>
-            <resolutionBox>
-                <captureResolutionBox>
-                    <boxLengthIsValid>False</boxLengthIsValid>
-                </captureResolutionBox>
-                <displayResolutionBox>
-                    <boxLengthIsValid>False</boxLengthIsValid>
-                </displayResolutionBox>
-            </resolutionBox>
-        </jp2HeaderBox>
-    </tests>
+    <isValid format="jp2">True</isValid>
+    <tests/>
     <properties>
         <signatureBox/>
         <fileTypeBox>
@@ -620,8 +610,8 @@ Jhove (Rel. 1.34.0, 2025-07-02)
         </fileTypeBox>
         <jp2HeaderBox>
             <imageHeaderBox>
-                <height>3129</height>
-                <width>3481</width>
+                <height>5681</height>
+                <width>4466</width>
                 <nC>3</nC>
                 <bPCSign>unsigned</bPCSign>
                 <bPCDepth>8</bPCDepth>
@@ -639,26 +629,26 @@ Jhove (Rel. 1.34.0, 2025-07-02)
                 <captureResolutionBox>
                     <vRcN>11811</vRcN>
                     <vRcD>1</vRcD>
-                    <hRcN>46</hRcN>
-                    <hRcD>8960</hRcD>
-                    <vRcE>1</vRcE>
+                    <hRcN>11811</hRcN>
+                    <hRcD>1</hRcD>
+                    <vRcE>0</vRcE>
                     <hRcE>0</hRcE>
-                    <vRescInPixelsPerMeter>118110.0</vRescInPixelsPerMeter>
-                    <hRescInPixelsPerMeter>0.01</hRescInPixelsPerMeter>
-                    <vRescInPixelsPerInch>2999.99</vRescInPixelsPerInch>
-                    <hRescInPixelsPerInch>0.0</hRescInPixelsPerInch>
+                    <vRescInPixelsPerMeter>11811.0</vRescInPixelsPerMeter>
+                    <hRescInPixelsPerMeter>11811.0</hRescInPixelsPerMeter>
+                    <vRescInPixelsPerInch>300.0</vRescInPixelsPerInch>
+                    <hRescInPixelsPerInch>300.0</hRescInPixelsPerInch>
                 </captureResolutionBox>
                 <displayResolutionBox>
                     <vRdN>11811</vRdN>
                     <vRdD>1</vRdD>
-                    <hRdN>46</hRdN>
-                    <hRdD>8960</hRdD>
-                    <vRdE>1</vRdE>
+                    <hRdN>11811</hRdN>
+                    <hRdD>1</hRdD>
+                    <vRdE>0</vRdE>
                     <hRdE>0</hRdE>
-                    <vResdInPixelsPerMeter>118110.0</vResdInPixelsPerMeter>
-                    <hResdInPixelsPerMeter>0.01</hResdInPixelsPerMeter>
-                    <vResdInPixelsPerInch>2999.99</vResdInPixelsPerInch>
-                    <hResdInPixelsPerInch>0.0</hResdInPixelsPerInch>
+                    <vResdInPixelsPerMeter>11811.0</vResdInPixelsPerMeter>
+                    <hResdInPixelsPerMeter>11811.0</hResdInPixelsPerMeter>
+                    <vResdInPixelsPerInch>300.0</vResdInPixelsPerInch>
+                    <hResdInPixelsPerInch>300.0</hResdInPixelsPerInch>
                 </displayResolutionBox>
             </resolutionBox>
         </jp2HeaderBox>
@@ -667,15 +657,15 @@ Jhove (Rel. 1.34.0, 2025-07-02)
                 <lsiz>47</lsiz>
                 <rsiz>0</rsiz>
                 <capability>ISO/IEC 15444-1</capability>
-                <xsiz>3481</xsiz>
-                <ysiz>3129</ysiz>
+                <xsiz>4466</xsiz>
+                <ysiz>5681</ysiz>
                 <xOsiz>0</xOsiz>
                 <yOsiz>0</yOsiz>
                 <xTsiz>4096</xTsiz>
                 <yTsiz>4096</yTsiz>
                 <xTOsiz>0</xTOsiz>
                 <yTOsiz>0</yTOsiz>
-                <numberOfTiles>1</numberOfTiles>
+                <numberOfTiles>4</numberOfTiles>
                 <csiz>3</csiz>
                 <ssizSign>unsigned</ssizSign>
                 <ssizDepth>8</ssizDepth>
@@ -731,6 +721,7 @@ Jhove (Rel. 1.34.0, 2025-07-02)
                 <epsilon>10</epsilon>
                 <epsilon>9</epsilon>
             </qcd>
+            <tlm/>
             <com>
                 <lcom>37</lcom>
                 <rcom>ISO/IEC 8859-15 (Latin)</rcom>
@@ -743,7 +734,7 @@ Jhove (Rel. 1.34.0, 2025-07-02)
                     <sot>
                         <lsot>10</lsot>
                         <isot>0</isot>
-                        <psot>17402</psot>
+                        <psot>16991</psot>
                         <tpsot>0</tpsot>
                         <tnsot>6</tnsot>
                     </sot>
@@ -754,7 +745,7 @@ Jhove (Rel. 1.34.0, 2025-07-02)
                     <sot>
                         <lsot>10</lsot>
                         <isot>0</isot>
-                        <psot>50608</psot>
+                        <psot>52313</psot>
                         <tpsot>1</tpsot>
                         <tnsot>6</tnsot>
                     </sot>
@@ -765,7 +756,7 @@ Jhove (Rel. 1.34.0, 2025-07-02)
                     <sot>
                         <lsot>10</lsot>
                         <isot>0</isot>
-                        <psot>209372</psot>
+                        <psot>241252</psot>
                         <tpsot>2</tpsot>
                         <tnsot>6</tnsot>
                     </sot>
@@ -776,7 +767,7 @@ Jhove (Rel. 1.34.0, 2025-07-02)
                     <sot>
                         <lsot>10</lsot>
                         <isot>0</isot>
-                        <psot>833287</psot>
+                        <psot>1095398</psot>
                         <tpsot>3</tpsot>
                         <tnsot>6</tnsot>
                     </sot>
@@ -787,7 +778,7 @@ Jhove (Rel. 1.34.0, 2025-07-02)
                     <sot>
                         <lsot>10</lsot>
                         <isot>0</isot>
-                        <psot>3018447</psot>
+                        <psot>4183762</psot>
                         <tpsot>4</tpsot>
                         <tnsot>6</tnsot>
                     </sot>
@@ -798,7 +789,205 @@ Jhove (Rel. 1.34.0, 2025-07-02)
                     <sot>
                         <lsot>10</lsot>
                         <isot>0</isot>
-                        <psot>8434126</psot>
+                        <psot>13538680</psot>
+                        <tpsot>5</tpsot>
+                        <tnsot>6</tnsot>
+                    </sot>
+                    <pltCount>0</pltCount>
+                    <pptCount>0</pptCount>
+                </tilePart>
+                <tilePart>
+                    <sot>
+                        <lsot>10</lsot>
+                        <isot>1</isot>
+                        <psot>2617</psot>
+                        <tpsot>0</tpsot>
+                        <tnsot>6</tnsot>
+                    </sot>
+                    <pltCount>0</pltCount>
+                    <pptCount>0</pptCount>
+                </tilePart>
+                <tilePart>
+                    <sot>
+                        <lsot>10</lsot>
+                        <isot>1</isot>
+                        <psot>7705</psot>
+                        <tpsot>1</tpsot>
+                        <tnsot>6</tnsot>
+                    </sot>
+                    <pltCount>0</pltCount>
+                    <pptCount>0</pptCount>
+                </tilePart>
+                <tilePart>
+                    <sot>
+                        <lsot>10</lsot>
+                        <isot>1</isot>
+                        <psot>29141</psot>
+                        <tpsot>2</tpsot>
+                        <tnsot>6</tnsot>
+                    </sot>
+                    <pltCount>0</pltCount>
+                    <pptCount>0</pptCount>
+                </tilePart>
+                <tilePart>
+                    <sot>
+                        <lsot>10</lsot>
+                        <isot>1</isot>
+                        <psot>118972</psot>
+                        <tpsot>3</tpsot>
+                        <tnsot>6</tnsot>
+                    </sot>
+                    <pltCount>0</pltCount>
+                    <pptCount>0</pptCount>
+                </tilePart>
+                <tilePart>
+                    <sot>
+                        <lsot>10</lsot>
+                        <isot>1</isot>
+                        <psot>420429</psot>
+                        <tpsot>4</tpsot>
+                        <tnsot>6</tnsot>
+                    </sot>
+                    <pltCount>0</pltCount>
+                    <pptCount>0</pptCount>
+                </tilePart>
+                <tilePart>
+                    <sot>
+                        <lsot>10</lsot>
+                        <isot>1</isot>
+                        <psot>1314774</psot>
+                        <tpsot>5</tpsot>
+                        <tnsot>6</tnsot>
+                    </sot>
+                    <pltCount>0</pltCount>
+                    <pptCount>0</pptCount>
+                </tilePart>
+                <tilePart>
+                    <sot>
+                        <lsot>10</lsot>
+                        <isot>2</isot>
+                        <psot>6603</psot>
+                        <tpsot>0</tpsot>
+                        <tnsot>6</tnsot>
+                    </sot>
+                    <pltCount>0</pltCount>
+                    <pptCount>0</pptCount>
+                </tilePart>
+                <tilePart>
+                    <sot>
+                        <lsot>10</lsot>
+                        <isot>2</isot>
+                        <psot>21071</psot>
+                        <tpsot>1</tpsot>
+                        <tnsot>6</tnsot>
+                    </sot>
+                    <pltCount>0</pltCount>
+                    <pptCount>0</pptCount>
+                </tilePart>
+                <tilePart>
+                    <sot>
+                        <lsot>10</lsot>
+                        <isot>2</isot>
+                        <psot>96939</psot>
+                        <tpsot>2</tpsot>
+                        <tnsot>6</tnsot>
+                    </sot>
+                    <pltCount>0</pltCount>
+                    <pptCount>0</pptCount>
+                </tilePart>
+                <tilePart>
+                    <sot>
+                        <lsot>10</lsot>
+                        <isot>2</isot>
+                        <psot>436912</psot>
+                        <tpsot>3</tpsot>
+                        <tnsot>6</tnsot>
+                    </sot>
+                    <pltCount>0</pltCount>
+                    <pptCount>0</pptCount>
+                </tilePart>
+                <tilePart>
+                    <sot>
+                        <lsot>10</lsot>
+                        <isot>2</isot>
+                        <psot>1664809</psot>
+                        <tpsot>4</tpsot>
+                        <tnsot>6</tnsot>
+                    </sot>
+                    <pltCount>0</pltCount>
+                    <pptCount>0</pptCount>
+                </tilePart>
+                <tilePart>
+                    <sot>
+                        <lsot>10</lsot>
+                        <isot>2</isot>
+                        <psot>5371232</psot>
+                        <tpsot>5</tpsot>
+                        <tnsot>6</tnsot>
+                    </sot>
+                    <pltCount>0</pltCount>
+                    <pptCount>0</pptCount>
+                </tilePart>
+                <tilePart>
+                    <sot>
+                        <lsot>10</lsot>
+                        <isot>3</isot>
+                        <psot>1083</psot>
+                        <tpsot>0</tpsot>
+                        <tnsot>6</tnsot>
+                    </sot>
+                    <pltCount>0</pltCount>
+                    <pptCount>0</pptCount>
+                </tilePart>
+                <tilePart>
+                    <sot>
+                        <lsot>10</lsot>
+                        <isot>3</isot>
+                        <psot>3187</psot>
+                        <tpsot>1</tpsot>
+                        <tnsot>6</tnsot>
+                    </sot>
+                    <pltCount>0</pltCount>
+                    <pptCount>0</pptCount>
+                </tilePart>
+                <tilePart>
+                    <sot>
+                        <lsot>10</lsot>
+                        <isot>3</isot>
+                        <psot>12071</psot>
+                        <tpsot>2</tpsot>
+                        <tnsot>6</tnsot>
+                    </sot>
+                    <pltCount>0</pltCount>
+                    <pptCount>0</pptCount>
+                </tilePart>
+                <tilePart>
+                    <sot>
+                        <lsot>10</lsot>
+                        <isot>3</isot>
+                        <psot>48968</psot>
+                        <tpsot>3</tpsot>
+                        <tnsot>6</tnsot>
+                    </sot>
+                    <pltCount>0</pltCount>
+                    <pptCount>0</pptCount>
+                </tilePart>
+                <tilePart>
+                    <sot>
+                        <lsot>10</lsot>
+                        <isot>3</isot>
+                        <psot>170616</psot>
+                        <tpsot>4</tpsot>
+                        <tnsot>6</tnsot>
+                    </sot>
+                    <pltCount>0</pltCount>
+                    <pptCount>0</pptCount>
+                </tilePart>
+                <tilePart>
+                    <sot>
+                        <lsot>10</lsot>
+                        <isot>3</isot>
+                        <psot>534011</psot>
                         <tpsot>5</tpsot>
                         <tnsot>6</tnsot>
                     </sot>
@@ -814,7 +1003,7 @@ Jhove (Rel. 1.34.0, 2025-07-02)
                 <rdf:RDF>
 
 
-                    <rdf:Description ns2:ResolutionUnit="1" ns2:XResolution="300000/1000" ns2:YResolution="300000/1000"/>
+                    <rdf:Description ns2:ResolutionUnit="2" ns2:XResolution="300000/1000" ns2:YResolution="300000/1000"/>
 
 
                 </rdf:RDF>
@@ -822,7 +1011,7 @@ Jhove (Rel. 1.34.0, 2025-07-02)
 
             </ns0:xmpmeta>
         </uuidBox>
-        <compressionRatio>2.6</compressionRatio>
+        <compressionRatio>2.59</compressionRatio>
     </properties>
     <warnings/>
 </file>
