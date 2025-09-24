@@ -542,6 +542,8 @@ Write-Host "  .\bench.ps1 -InputDir . -Recursive -Runs 3 -Archival -Avx2" -Foreg
 
 ## Basic validity
 
+Results may differ with different tif2jp2 flags. Mostly default setting have been tested.
+
 ### jhove
 
 ```
@@ -582,17 +584,16 @@ Jhove (Rel. 1.34.0, 2025-07-02)
 ### jpylyzer
 
 ```
-PS C:\temp\jpeg2000\target\release\jpylyzer_2.2.1_win64\jpylyzer> ./jpylyzer.exe 0001.jp2
 <?xml version='1.0' encoding='UTF-8'?>
 <jpylyzer xmlns="http://openpreservation.org/ns/jpylyzer/v2/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://openpreservation.org/ns/jpylyzer/v2/ http://jpylyzer.openpreservation.org/jpylyzer-v-2-2.xsd">
 <toolInfo>
-    <toolName>jpylyzer.exe</toolName>
+    <toolName>__main__.py</toolName>
     <toolVersion>2.2.1</toolVersion>
 </toolInfo>
 <file xmlns:ns0="adobe:ns:meta/" xmlns:ns2="http://ns.adobe.com/tiff/1.0/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
     <fileInfo>
         <fileName>0001.jp2</fileName>
-        <filePath>C:\temp\jpeg2000\target\release\jpylyzer_2.2.1_win64\jpylyzer\0001.jp2</filePath>
+        <filePath>C:\temp\jpeg2000\target\release\scans\out\0001.jp2</filePath>
         <fileSizeInBytes>29390238</fileSizeInBytes>
         <fileLastModified>2025-09-04T13:07:01.419524</fileLastModified>
     </fileInfo>
@@ -998,16 +999,16 @@ PS C:\temp\jpeg2000\target\release\jpylyzer_2.2.1_win64\jpylyzer> ./jpylyzer.exe
         </contiguousCodestreamBox>
         <uuidBox>
             <ns0:xmpmeta>
-
-
+                
+ 
                 <rdf:RDF>
-
-
-                    <rdf:Description ns2:ResolutionUnit="2" ns2:XResolution="300000/1000" ns2:YResolution="300000/1000"/>
-
-
+                    
+  
+                    <rdf:Description ns2:XResolution="300000/1000" ns2:YResolution="300000/1000" ns2:ResolutionUnit="2"/>
+                    
+ 
                 </rdf:RDF>
-
+                
 
             </ns0:xmpmeta>
         </uuidBox>
@@ -1017,3 +1018,125 @@ PS C:\temp\jpeg2000\target\release\jpylyzer_2.2.1_win64\jpylyzer> ./jpylyzer.exe
 </file>
 </jpylyzer>
 ```
+
+### opj_dump
+
+
+```
+[INFO] Start to read j2k main header (129).
+[INFO] Main header has been correctly decoded.
+Image info {
+	 x0=0, y0=0
+	 x1=4466, y1=5681
+	 numcomps=3
+		 component 0 {
+		 dx=1, dy=1
+		 prec=8
+		 sgnd=0
+	}
+		 component 1 {
+		 dx=1, dy=1
+		 prec=8
+		 sgnd=0
+	}
+		 component 2 {
+		 dx=1, dy=1
+		 prec=8
+		 sgnd=0
+	}
+}
+Codestream info from main header: {
+	 tx0=0, ty0=0
+	 tdx=4096, tdy=4096
+	 tw=2, th=2
+	 default tile {
+		 csty=0x7
+		 prg=0x2
+		 numlayers=1
+		 mct=1
+		 comp 0 {
+			 csty=0x1
+			 numresolutions=6
+			 cblkw=2^6
+			 cblkh=2^6
+			 cblksty=0
+			 qmfbid=1
+			 preccintsize (w,h)=(7,7) (8,8) (8,8) (8,8) (8,8) (8,8) 
+			 qntsty=0
+			 numgbits=2
+			 stepsizes (m,e)=(0,8) (0,9) (0,9) (0,10) (0,9) (0,9) (0,10) (0,9) (0,9) (0,10) (0,9) (0,9) (0,10) (0,9) (0,9) (0,10) 
+			 roishift=0
+		 }
+		 comp 1 {
+			 csty=0x1
+			 numresolutions=6
+			 cblkw=2^6
+			 cblkh=2^6
+			 cblksty=0
+			 qmfbid=1
+			 preccintsize (w,h)=(7,7) (8,8) (8,8) (8,8) (8,8) (8,8) 
+			 qntsty=0
+			 numgbits=2
+			 stepsizes (m,e)=(0,8) (0,9) (0,9) (0,10) (0,9) (0,9) (0,10) (0,9) (0,9) (0,10) (0,9) (0,9) (0,10) (0,9) (0,9) (0,10) 
+			 roishift=0
+		 }
+		 comp 2 {
+			 csty=0x1
+			 numresolutions=6
+			 cblkw=2^6
+			 cblkh=2^6
+			 cblksty=0
+			 qmfbid=1
+			 preccintsize (w,h)=(7,7) (8,8) (8,8) (8,8) (8,8) (8,8) 
+			 qntsty=0
+			 numgbits=2
+			 stepsizes (m,e)=(0,8) (0,9) (0,9) (0,10) (0,9) (0,9) (0,10) (0,9) (0,9) (0,10) (0,9) (0,9) (0,10) (0,9) (0,9) (0,10) 
+			 roishift=0
+		 }
+	 }
+}
+Codestream index from main header: {
+	 Main header start position=129
+	 Main header end position=386
+	 Marker list: {
+		 type=0xff4f, pos=129, len=2
+		 type=0xff51, pos=131, len=49
+		 type=0xff52, pos=180, len=20
+		 type=0xff5c, pos=200, len=21
+		 type=0xff55, pos=221, len=126
+		 type=0xff64, pos=347, len=39
+	 }
+	 Tile index: {
+		 nb of tile-part in tile [0]=6
+			 tile-part[0]: star_pos=386, end_header=0, end_pos=17377.
+			 tile-part[1]: star_pos=17377, end_header=0, end_pos=69690.
+			 tile-part[2]: star_pos=69690, end_header=0, end_pos=310942.
+			 tile-part[3]: star_pos=310942, end_header=0, end_pos=1406340.
+			 tile-part[4]: star_pos=1406340, end_header=0, end_pos=5590102.
+			 tile-part[5]: star_pos=5590102, end_header=0, end_pos=19128782.
+		 nb of tile-part in tile [1]=6
+			 tile-part[0]: star_pos=19128782, end_header=0, end_pos=19131399.
+			 tile-part[1]: star_pos=19131399, end_header=0, end_pos=19139104.
+			 tile-part[2]: star_pos=19139104, end_header=0, end_pos=19168245.
+			 tile-part[3]: star_pos=19168245, end_header=0, end_pos=19287217.
+			 tile-part[4]: star_pos=19287217, end_header=0, end_pos=19707646.
+			 tile-part[5]: star_pos=19707646, end_header=0, end_pos=21022420.
+		 nb of tile-part in tile [2]=6
+			 tile-part[0]: star_pos=21022420, end_header=0, end_pos=21029023.
+			 tile-part[1]: star_pos=21029023, end_header=0, end_pos=21050094.
+			 tile-part[2]: star_pos=21050094, end_header=0, end_pos=21147033.
+			 tile-part[3]: star_pos=21147033, end_header=0, end_pos=21583945.
+			 tile-part[4]: star_pos=21583945, end_header=0, end_pos=23248754.
+			 tile-part[5]: star_pos=23248754, end_header=0, end_pos=28619986.
+		 nb of tile-part in tile [3]=6
+			 tile-part[0]: star_pos=28619986, end_header=0, end_pos=28621069.
+			 tile-part[1]: star_pos=28621069, end_header=0, end_pos=28624256.
+			 tile-part[2]: star_pos=28624256, end_header=0, end_pos=28636327.
+			 tile-part[3]: star_pos=28636327, end_header=0, end_pos=28685295.
+			 tile-part[4]: star_pos=28685295, end_header=0, end_pos=28855911.
+			 tile-part[5]: star_pos=28855911, end_header=0, end_pos=29389922.
+	 }
+}
+
+```
+
