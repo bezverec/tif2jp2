@@ -542,7 +542,7 @@ Write-Host "  .\bench.ps1 -InputDir . -Recursive -Runs 3 -Archival -Avx2" -Foreg
 
 ## Basic validity
 
-Results may differ with different tif2jp2 flags. Mostly default setting have been tested.
+Results may differ with different tif2jp2 flags. Mostly default settings have been tested.
 
 ### jhove
 
