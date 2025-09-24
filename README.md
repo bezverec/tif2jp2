@@ -587,15 +587,15 @@ Jhove (Rel. 1.34.0, 2025-07-02)
 <?xml version='1.0' encoding='UTF-8'?>
 <jpylyzer xmlns="http://openpreservation.org/ns/jpylyzer/v2/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://openpreservation.org/ns/jpylyzer/v2/ http://jpylyzer.openpreservation.org/jpylyzer-v-2-2.xsd">
 <toolInfo>
-    <toolName>__main__.py</toolName>
+    <toolName>jpylyzer.exe</toolName>
     <toolVersion>2.2.1</toolVersion>
 </toolInfo>
-<file xmlns:ns0="adobe:ns:meta/" xmlns:ns2="http://ns.adobe.com/tiff/1.0/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+<file>
     <fileInfo>
-        <fileName>0001.jp2</fileName>
-        <filePath>C:\temp\jpeg2000\target\release\scans\out\0001.jp2</filePath>
-        <fileSizeInBytes>29390238</fileSizeInBytes>
-        <fileLastModified>2025-09-04T13:07:01.419524</fileLastModified>
+        <fileName>ilustrovany_zpravodaj_1938-06-23_cislo25_strana3.jp2</fileName>
+        <filePath>G:\temp\jpeg2000\jpylyzer\ilustrovany_zpravodaj_1938-06-23_cislo25_strana3.jp2</filePath>
+        <fileSizeInBytes>12563540</fileSizeInBytes>
+        <fileLastModified>2025-09-05T22:27:45.752050</fileLastModified>
     </fileInfo>
     <statusInfo>
         <success>True</success>
@@ -611,8 +611,8 @@ Jhove (Rel. 1.34.0, 2025-07-02)
         </fileTypeBox>
         <jp2HeaderBox>
             <imageHeaderBox>
-                <height>5681</height>
-                <width>4466</width>
+                <height>3129</height>
+                <width>3481</width>
                 <nC>3</nC>
                 <bPCSign>unsigned</bPCSign>
                 <bPCDepth>8</bPCDepth>
@@ -658,15 +658,15 @@ Jhove (Rel. 1.34.0, 2025-07-02)
                 <lsiz>47</lsiz>
                 <rsiz>0</rsiz>
                 <capability>ISO/IEC 15444-1</capability>
-                <xsiz>4466</xsiz>
-                <ysiz>5681</ysiz>
+                <xsiz>3481</xsiz>
+                <ysiz>3129</ysiz>
                 <xOsiz>0</xOsiz>
                 <yOsiz>0</yOsiz>
                 <xTsiz>4096</xTsiz>
                 <yTsiz>4096</yTsiz>
                 <xTOsiz>0</xTOsiz>
                 <yTOsiz>0</yTOsiz>
-                <numberOfTiles>4</numberOfTiles>
+                <numberOfTiles>1</numberOfTiles>
                 <csiz>3</csiz>
                 <ssizSign>unsigned</ssizSign>
                 <ssizDepth>8</ssizDepth>
@@ -735,7 +735,7 @@ Jhove (Rel. 1.34.0, 2025-07-02)
                     <sot>
                         <lsot>10</lsot>
                         <isot>0</isot>
-                        <psot>16991</psot>
+                        <psot>17402</psot>
                         <tpsot>0</tpsot>
                         <tnsot>6</tnsot>
                     </sot>
@@ -746,7 +746,7 @@ Jhove (Rel. 1.34.0, 2025-07-02)
                     <sot>
                         <lsot>10</lsot>
                         <isot>0</isot>
-                        <psot>52313</psot>
+                        <psot>50608</psot>
                         <tpsot>1</tpsot>
                         <tnsot>6</tnsot>
                     </sot>
@@ -757,7 +757,7 @@ Jhove (Rel. 1.34.0, 2025-07-02)
                     <sot>
                         <lsot>10</lsot>
                         <isot>0</isot>
-                        <psot>241252</psot>
+                        <psot>209372</psot>
                         <tpsot>2</tpsot>
                         <tnsot>6</tnsot>
                     </sot>
@@ -768,7 +768,7 @@ Jhove (Rel. 1.34.0, 2025-07-02)
                     <sot>
                         <lsot>10</lsot>
                         <isot>0</isot>
-                        <psot>1095398</psot>
+                        <psot>833287</psot>
                         <tpsot>3</tpsot>
                         <tnsot>6</tnsot>
                     </sot>
@@ -779,7 +779,7 @@ Jhove (Rel. 1.34.0, 2025-07-02)
                     <sot>
                         <lsot>10</lsot>
                         <isot>0</isot>
-                        <psot>4183762</psot>
+                        <psot>3018447</psot>
                         <tpsot>4</tpsot>
                         <tnsot>6</tnsot>
                     </sot>
@@ -790,205 +790,7 @@ Jhove (Rel. 1.34.0, 2025-07-02)
                     <sot>
                         <lsot>10</lsot>
                         <isot>0</isot>
-                        <psot>13538680</psot>
-                        <tpsot>5</tpsot>
-                        <tnsot>6</tnsot>
-                    </sot>
-                    <pltCount>0</pltCount>
-                    <pptCount>0</pptCount>
-                </tilePart>
-                <tilePart>
-                    <sot>
-                        <lsot>10</lsot>
-                        <isot>1</isot>
-                        <psot>2617</psot>
-                        <tpsot>0</tpsot>
-                        <tnsot>6</tnsot>
-                    </sot>
-                    <pltCount>0</pltCount>
-                    <pptCount>0</pptCount>
-                </tilePart>
-                <tilePart>
-                    <sot>
-                        <lsot>10</lsot>
-                        <isot>1</isot>
-                        <psot>7705</psot>
-                        <tpsot>1</tpsot>
-                        <tnsot>6</tnsot>
-                    </sot>
-                    <pltCount>0</pltCount>
-                    <pptCount>0</pptCount>
-                </tilePart>
-                <tilePart>
-                    <sot>
-                        <lsot>10</lsot>
-                        <isot>1</isot>
-                        <psot>29141</psot>
-                        <tpsot>2</tpsot>
-                        <tnsot>6</tnsot>
-                    </sot>
-                    <pltCount>0</pltCount>
-                    <pptCount>0</pptCount>
-                </tilePart>
-                <tilePart>
-                    <sot>
-                        <lsot>10</lsot>
-                        <isot>1</isot>
-                        <psot>118972</psot>
-                        <tpsot>3</tpsot>
-                        <tnsot>6</tnsot>
-                    </sot>
-                    <pltCount>0</pltCount>
-                    <pptCount>0</pptCount>
-                </tilePart>
-                <tilePart>
-                    <sot>
-                        <lsot>10</lsot>
-                        <isot>1</isot>
-                        <psot>420429</psot>
-                        <tpsot>4</tpsot>
-                        <tnsot>6</tnsot>
-                    </sot>
-                    <pltCount>0</pltCount>
-                    <pptCount>0</pptCount>
-                </tilePart>
-                <tilePart>
-                    <sot>
-                        <lsot>10</lsot>
-                        <isot>1</isot>
-                        <psot>1314774</psot>
-                        <tpsot>5</tpsot>
-                        <tnsot>6</tnsot>
-                    </sot>
-                    <pltCount>0</pltCount>
-                    <pptCount>0</pptCount>
-                </tilePart>
-                <tilePart>
-                    <sot>
-                        <lsot>10</lsot>
-                        <isot>2</isot>
-                        <psot>6603</psot>
-                        <tpsot>0</tpsot>
-                        <tnsot>6</tnsot>
-                    </sot>
-                    <pltCount>0</pltCount>
-                    <pptCount>0</pptCount>
-                </tilePart>
-                <tilePart>
-                    <sot>
-                        <lsot>10</lsot>
-                        <isot>2</isot>
-                        <psot>21071</psot>
-                        <tpsot>1</tpsot>
-                        <tnsot>6</tnsot>
-                    </sot>
-                    <pltCount>0</pltCount>
-                    <pptCount>0</pptCount>
-                </tilePart>
-                <tilePart>
-                    <sot>
-                        <lsot>10</lsot>
-                        <isot>2</isot>
-                        <psot>96939</psot>
-                        <tpsot>2</tpsot>
-                        <tnsot>6</tnsot>
-                    </sot>
-                    <pltCount>0</pltCount>
-                    <pptCount>0</pptCount>
-                </tilePart>
-                <tilePart>
-                    <sot>
-                        <lsot>10</lsot>
-                        <isot>2</isot>
-                        <psot>436912</psot>
-                        <tpsot>3</tpsot>
-                        <tnsot>6</tnsot>
-                    </sot>
-                    <pltCount>0</pltCount>
-                    <pptCount>0</pptCount>
-                </tilePart>
-                <tilePart>
-                    <sot>
-                        <lsot>10</lsot>
-                        <isot>2</isot>
-                        <psot>1664809</psot>
-                        <tpsot>4</tpsot>
-                        <tnsot>6</tnsot>
-                    </sot>
-                    <pltCount>0</pltCount>
-                    <pptCount>0</pptCount>
-                </tilePart>
-                <tilePart>
-                    <sot>
-                        <lsot>10</lsot>
-                        <isot>2</isot>
-                        <psot>5371232</psot>
-                        <tpsot>5</tpsot>
-                        <tnsot>6</tnsot>
-                    </sot>
-                    <pltCount>0</pltCount>
-                    <pptCount>0</pptCount>
-                </tilePart>
-                <tilePart>
-                    <sot>
-                        <lsot>10</lsot>
-                        <isot>3</isot>
-                        <psot>1083</psot>
-                        <tpsot>0</tpsot>
-                        <tnsot>6</tnsot>
-                    </sot>
-                    <pltCount>0</pltCount>
-                    <pptCount>0</pptCount>
-                </tilePart>
-                <tilePart>
-                    <sot>
-                        <lsot>10</lsot>
-                        <isot>3</isot>
-                        <psot>3187</psot>
-                        <tpsot>1</tpsot>
-                        <tnsot>6</tnsot>
-                    </sot>
-                    <pltCount>0</pltCount>
-                    <pptCount>0</pptCount>
-                </tilePart>
-                <tilePart>
-                    <sot>
-                        <lsot>10</lsot>
-                        <isot>3</isot>
-                        <psot>12071</psot>
-                        <tpsot>2</tpsot>
-                        <tnsot>6</tnsot>
-                    </sot>
-                    <pltCount>0</pltCount>
-                    <pptCount>0</pptCount>
-                </tilePart>
-                <tilePart>
-                    <sot>
-                        <lsot>10</lsot>
-                        <isot>3</isot>
-                        <psot>48968</psot>
-                        <tpsot>3</tpsot>
-                        <tnsot>6</tnsot>
-                    </sot>
-                    <pltCount>0</pltCount>
-                    <pptCount>0</pptCount>
-                </tilePart>
-                <tilePart>
-                    <sot>
-                        <lsot>10</lsot>
-                        <isot>3</isot>
-                        <psot>170616</psot>
-                        <tpsot>4</tpsot>
-                        <tnsot>6</tnsot>
-                    </sot>
-                    <pltCount>0</pltCount>
-                    <pptCount>0</pptCount>
-                </tilePart>
-                <tilePart>
-                    <sot>
-                        <lsot>10</lsot>
-                        <isot>3</isot>
-                        <psot>534011</psot>
+                        <psot>8434126</psot>
                         <tpsot>5</tpsot>
                         <tnsot>6</tnsot>
                     </sot>
@@ -997,22 +799,7 @@ Jhove (Rel. 1.34.0, 2025-07-02)
                 </tilePart>
             </tileParts>
         </contiguousCodestreamBox>
-        <uuidBox>
-            <ns0:xmpmeta>
-                
- 
-                <rdf:RDF>
-                    
-  
-                    <rdf:Description ns2:XResolution="300000/1000" ns2:YResolution="300000/1000" ns2:ResolutionUnit="2"/>
-                    
- 
-                </rdf:RDF>
-                
-
-            </ns0:xmpmeta>
-        </uuidBox>
-        <compressionRatio>2.59</compressionRatio>
+        <compressionRatio>2.6</compressionRatio>
     </properties>
     <warnings/>
 </file>
@@ -1023,119 +810,100 @@ Jhove (Rel. 1.34.0, 2025-07-02)
 
 
 ```
+PS G:\temp\jpeg2000\openjpeg-v2.5.3-windows-x64\bin> .\opj_dump.exe -i .\ilustrovany_zpravodaj_1938-06-23_cislo25_strana3.jp2
+
 [INFO] Start to read j2k main header (129).
 [INFO] Main header has been correctly decoded.
 Image info {
-	 x0=0, y0=0
-	 x1=4466, y1=5681
-	 numcomps=3
-		 component 0 {
-		 dx=1, dy=1
-		 prec=8
-		 sgnd=0
-	}
-		 component 1 {
-		 dx=1, dy=1
-		 prec=8
-		 sgnd=0
-	}
-		 component 2 {
-		 dx=1, dy=1
-		 prec=8
-		 sgnd=0
-	}
+         x0=0, y0=0
+         x1=3481, y1=3129
+         numcomps=3
+                 component 0 {
+                 dx=1, dy=1
+                 prec=8
+                 sgnd=0
+        }
+                 component 1 {
+                 dx=1, dy=1
+                 prec=8
+                 sgnd=0
+        }
+                 component 2 {
+                 dx=1, dy=1
+                 prec=8
+                 sgnd=0
+        }
 }
 Codestream info from main header: {
-	 tx0=0, ty0=0
-	 tdx=4096, tdy=4096
-	 tw=2, th=2
-	 default tile {
-		 csty=0x7
-		 prg=0x2
-		 numlayers=1
-		 mct=1
-		 comp 0 {
-			 csty=0x1
-			 numresolutions=6
-			 cblkw=2^6
-			 cblkh=2^6
-			 cblksty=0
-			 qmfbid=1
-			 preccintsize (w,h)=(7,7) (8,8) (8,8) (8,8) (8,8) (8,8) 
-			 qntsty=0
-			 numgbits=2
-			 stepsizes (m,e)=(0,8) (0,9) (0,9) (0,10) (0,9) (0,9) (0,10) (0,9) (0,9) (0,10) (0,9) (0,9) (0,10) (0,9) (0,9) (0,10) 
-			 roishift=0
-		 }
-		 comp 1 {
-			 csty=0x1
-			 numresolutions=6
-			 cblkw=2^6
-			 cblkh=2^6
-			 cblksty=0
-			 qmfbid=1
-			 preccintsize (w,h)=(7,7) (8,8) (8,8) (8,8) (8,8) (8,8) 
-			 qntsty=0
-			 numgbits=2
-			 stepsizes (m,e)=(0,8) (0,9) (0,9) (0,10) (0,9) (0,9) (0,10) (0,9) (0,9) (0,10) (0,9) (0,9) (0,10) (0,9) (0,9) (0,10) 
-			 roishift=0
-		 }
-		 comp 2 {
-			 csty=0x1
-			 numresolutions=6
-			 cblkw=2^6
-			 cblkh=2^6
-			 cblksty=0
-			 qmfbid=1
-			 preccintsize (w,h)=(7,7) (8,8) (8,8) (8,8) (8,8) (8,8) 
-			 qntsty=0
-			 numgbits=2
-			 stepsizes (m,e)=(0,8) (0,9) (0,9) (0,10) (0,9) (0,9) (0,10) (0,9) (0,9) (0,10) (0,9) (0,9) (0,10) (0,9) (0,9) (0,10) 
-			 roishift=0
-		 }
-	 }
+         tx0=0, ty0=0
+         tdx=4096, tdy=4096
+         tw=1, th=1
+         default tile {
+                 csty=0x7
+                 prg=0x2
+                 numlayers=1
+                 mct=1
+                 comp 0 {
+                         csty=0x1
+                         numresolutions=6
+                         cblkw=2^6
+                         cblkh=2^6
+                         cblksty=0
+                         qmfbid=1
+                         preccintsize (w,h)=(7,7) (8,8) (8,8) (8,8) (8,8) (8,8)
+                         qntsty=0
+                         numgbits=2
+                         stepsizes (m,e)=(0,8) (0,9) (0,9) (0,10) (0,9) (0,9) (0,10) (0,9) (0,9) (0,10) (0,9) (0,9) (0,10) (0,9) (0,9) (0,10)
+                         roishift=0
+                 }
+                 comp 1 {
+                         csty=0x1
+                         numresolutions=6
+                         cblkw=2^6
+                         cblkh=2^6
+                         cblksty=0
+                         qmfbid=1
+                         preccintsize (w,h)=(7,7) (8,8) (8,8) (8,8) (8,8) (8,8)
+                         qntsty=0
+                         numgbits=2
+                         stepsizes (m,e)=(0,8) (0,9) (0,9) (0,10) (0,9) (0,9) (0,10) (0,9) (0,9) (0,10) (0,9) (0,9) (0,10) (0,9) (0,9) (0,10)
+                         roishift=0
+                 }
+                 comp 2 {
+                         csty=0x1
+                         numresolutions=6
+                         cblkw=2^6
+                         cblkh=2^6
+                         cblksty=0
+                         qmfbid=1
+                         preccintsize (w,h)=(7,7) (8,8) (8,8) (8,8) (8,8) (8,8)
+                         qntsty=0
+                         numgbits=2
+                         stepsizes (m,e)=(0,8) (0,9) (0,9) (0,10) (0,9) (0,9) (0,10) (0,9) (0,9) (0,10) (0,9) (0,9) (0,10) (0,9) (0,9) (0,10)
+                         roishift=0
+                 }
+         }
 }
 Codestream index from main header: {
-	 Main header start position=129
-	 Main header end position=386
-	 Marker list: {
-		 type=0xff4f, pos=129, len=2
-		 type=0xff51, pos=131, len=49
-		 type=0xff52, pos=180, len=20
-		 type=0xff5c, pos=200, len=21
-		 type=0xff55, pos=221, len=126
-		 type=0xff64, pos=347, len=39
-	 }
-	 Tile index: {
-		 nb of tile-part in tile [0]=6
-			 tile-part[0]: star_pos=386, end_header=0, end_pos=17377.
-			 tile-part[1]: star_pos=17377, end_header=0, end_pos=69690.
-			 tile-part[2]: star_pos=69690, end_header=0, end_pos=310942.
-			 tile-part[3]: star_pos=310942, end_header=0, end_pos=1406340.
-			 tile-part[4]: star_pos=1406340, end_header=0, end_pos=5590102.
-			 tile-part[5]: star_pos=5590102, end_header=0, end_pos=19128782.
-		 nb of tile-part in tile [1]=6
-			 tile-part[0]: star_pos=19128782, end_header=0, end_pos=19131399.
-			 tile-part[1]: star_pos=19131399, end_header=0, end_pos=19139104.
-			 tile-part[2]: star_pos=19139104, end_header=0, end_pos=19168245.
-			 tile-part[3]: star_pos=19168245, end_header=0, end_pos=19287217.
-			 tile-part[4]: star_pos=19287217, end_header=0, end_pos=19707646.
-			 tile-part[5]: star_pos=19707646, end_header=0, end_pos=21022420.
-		 nb of tile-part in tile [2]=6
-			 tile-part[0]: star_pos=21022420, end_header=0, end_pos=21029023.
-			 tile-part[1]: star_pos=21029023, end_header=0, end_pos=21050094.
-			 tile-part[2]: star_pos=21050094, end_header=0, end_pos=21147033.
-			 tile-part[3]: star_pos=21147033, end_header=0, end_pos=21583945.
-			 tile-part[4]: star_pos=21583945, end_header=0, end_pos=23248754.
-			 tile-part[5]: star_pos=23248754, end_header=0, end_pos=28619986.
-		 nb of tile-part in tile [3]=6
-			 tile-part[0]: star_pos=28619986, end_header=0, end_pos=28621069.
-			 tile-part[1]: star_pos=28621069, end_header=0, end_pos=28624256.
-			 tile-part[2]: star_pos=28624256, end_header=0, end_pos=28636327.
-			 tile-part[3]: star_pos=28636327, end_header=0, end_pos=28685295.
-			 tile-part[4]: star_pos=28685295, end_header=0, end_pos=28855911.
-			 tile-part[5]: star_pos=28855911, end_header=0, end_pos=29389922.
-	 }
+         Main header start position=129
+         Main header end position=296
+         Marker list: {
+                 type=0xff4f, pos=129, len=2
+                 type=0xff51, pos=131, len=49
+                 type=0xff52, pos=180, len=20
+                 type=0xff5c, pos=200, len=21
+                 type=0xff55, pos=221, len=36
+                 type=0xff64, pos=257, len=39
+         }
+         Tile index: {
+                 nb of tile-part in tile [0]=6
+                         tile-part[0]: star_pos=296, end_header=0, end_pos=17698.
+                         tile-part[1]: star_pos=17698, end_header=0, end_pos=68306.
+                         tile-part[2]: star_pos=68306, end_header=0, end_pos=277678.
+                         tile-part[3]: star_pos=277678, end_header=0, end_pos=1110965.
+                         tile-part[4]: star_pos=1110965, end_header=0, end_pos=4129412.
+                         tile-part[5]: star_pos=4129412, end_header=0, end_pos=12563538.
+         }
 }
 
 ```
