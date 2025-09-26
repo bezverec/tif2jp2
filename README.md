@@ -76,7 +76,7 @@ This converter implements the parameters required by the Czech national standard
 ## Build from Source
 
 ### Prerequisites
-1. install [Git](https://git-scm.com/)
+1. install [Git](https://git-scm.com/) *(optional, you can also download ZIP/files from this repo instead of using `git clone`)*
 2. install [**Rust** (stable)](https://www.rust-lang.org/tools/install) and Cargo
 
 ---
