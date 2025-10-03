@@ -809,17 +809,16 @@ PS C:\temp\tif2jp2\target\release\jpylyzer> ./jpylyzer.exe .\Vlaltxt.jp2
 PS C:\temp\tif2jp2\target\release\jpylyzer>
 ```
 
-### opj_dump
-
+### opj_dump (v0.2.1)
 
 ```
-PS G:\temp\jpeg2000\openjpeg-v2.5.3-windows-x64\bin> .\opj_dump.exe -i .\ilustrovany_zpravodaj_1938-06-23_cislo25_strana3.jp2
+PS C:\tif2jp2\target\release\openjpeg-v2.5.4-windows-x64\bin> .\opj_dump.exe -i .\Vlaltxt.jp2
 
 [INFO] Start to read j2k main header (129).
 [INFO] Main header has been correctly decoded.
 Image info {
          x0=0, y0=0
-         x1=3481, y1=3129
+         x1=1344, y1=2142
          numcomps=3
                  component 0 {
                  dx=1, dy=1
@@ -851,9 +850,9 @@ Codestream info from main header: {
                          numresolutions=6
                          cblkw=2^6
                          cblkh=2^6
-                         cblksty=0
+                         cblksty=0x1
                          qmfbid=1
-                         preccintsize (w,h)=(7,7) (8,8) (8,8) (8,8) (8,8) (8,8)
+                         preccintsize (w,h)=(8,8) (8,8) (7,7) (7,7) (7,7) (7,7)
                          qntsty=0
                          numgbits=2
                          stepsizes (m,e)=(0,8) (0,9) (0,9) (0,10) (0,9) (0,9) (0,10) (0,9) (0,9) (0,10) (0,9) (0,9) (0,10) (0,9) (0,9) (0,10)
@@ -864,9 +863,9 @@ Codestream info from main header: {
                          numresolutions=6
                          cblkw=2^6
                          cblkh=2^6
-                         cblksty=0
+                         cblksty=0x1
                          qmfbid=1
-                         preccintsize (w,h)=(7,7) (8,8) (8,8) (8,8) (8,8) (8,8)
+                         preccintsize (w,h)=(8,8) (8,8) (7,7) (7,7) (7,7) (7,7)
                          qntsty=0
                          numgbits=2
                          stepsizes (m,e)=(0,8) (0,9) (0,9) (0,10) (0,9) (0,9) (0,10) (0,9) (0,9) (0,10) (0,9) (0,9) (0,10) (0,9) (0,9) (0,10)
@@ -877,9 +876,9 @@ Codestream info from main header: {
                          numresolutions=6
                          cblkw=2^6
                          cblkh=2^6
-                         cblksty=0
+                         cblksty=0x1
                          qmfbid=1
-                         preccintsize (w,h)=(7,7) (8,8) (8,8) (8,8) (8,8) (8,8)
+                         preccintsize (w,h)=(8,8) (8,8) (7,7) (7,7) (7,7) (7,7)
                          qntsty=0
                          numgbits=2
                          stepsizes (m,e)=(0,8) (0,9) (0,9) (0,10) (0,9) (0,9) (0,10) (0,9) (0,9) (0,10) (0,9) (0,9) (0,10) (0,9) (0,9) (0,10)
@@ -900,14 +899,15 @@ Codestream index from main header: {
          }
          Tile index: {
                  nb of tile-part in tile [0]=6
-                         tile-part[0]: star_pos=296, end_header=0, end_pos=17698.
-                         tile-part[1]: star_pos=17698, end_header=0, end_pos=68306.
-                         tile-part[2]: star_pos=68306, end_header=0, end_pos=277678.
-                         tile-part[3]: star_pos=277678, end_header=0, end_pos=1110965.
-                         tile-part[4]: star_pos=1110965, end_header=0, end_pos=4129412.
-                         tile-part[5]: star_pos=4129412, end_header=0, end_pos=12563538.
+                         tile-part[0]: star_pos=296, end_header=0, end_pos=5029.
+                         tile-part[1]: star_pos=5029, end_header=0, end_pos=19201.
+                         tile-part[2]: star_pos=19201, end_header=0, end_pos=82417.
+                         tile-part[3]: star_pos=82417, end_header=0, end_pos=360226.
+                         tile-part[4]: star_pos=360226, end_header=0, end_pos=1430625.
+                         tile-part[5]: star_pos=1430625, end_header=0, end_pos=4382362.
          }
 }
+PS C:\tif2jp2\target\release\openjpeg-v2.5.4-windows-x64\bin>
 
 ```
 
