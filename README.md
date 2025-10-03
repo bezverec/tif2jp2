@@ -582,7 +582,7 @@ Jhove (Rel. 1.34.0, 2025-07-02)
      EnumCS: sRGB
 ```
 
-### jpylyzer (v0.2.1 fix for NDK archival profile - added CBLK bypass and precincts fix)
+### jpylyzer (tif2jp2 v0.2.1 fix for NDK archival profile - added CBLK bypass and precincts fix)
 
 ```
 PS C:\temp\tif2jp2\target\release\jpylyzer> ./jpylyzer.exe .\Vlaltxt.jp2
@@ -809,7 +809,7 @@ PS C:\temp\tif2jp2\target\release\jpylyzer> ./jpylyzer.exe .\Vlaltxt.jp2
 PS C:\temp\tif2jp2\target\release\jpylyzer>
 ```
 
-### opj_dump (v0.2.1)
+### opj_dump (tif2jp2 v0.2.1)
 
 ```
 PS C:\tif2jp2\target\release\openjpeg-v2.5.4-windows-x64\bin> .\opj_dump.exe -i .\Vlaltxt.jp2
@@ -911,7 +911,7 @@ PS C:\tif2jp2\target\release\openjpeg-v2.5.4-windows-x64\bin>
 
 ```
 
-## HexDump
+## HexDump (tif2jp2 v0.2.1 - TLM presence check)
 
 ```
 PS C:\tif2jp2\target\release\hexdump-2.1.0> .\hexdump.exe -C .\Vlaltxt.jp2 | Select-String -Pattern 'FF 55'
