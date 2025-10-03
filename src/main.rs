@@ -167,7 +167,12 @@ pub struct Args {
     /// Disable PLT markers
     #[arg(long = "no-plt", action = ArgAction::SetTrue, overrides_with = "plt")]
     pub plt_off: bool,
-
+    /// Enable Selective arithmetic coding bypass (code-block LAZY) [NDK preset: on]
+    #[arg(long = "bypass", action = ArgAction::SetTrue, overrides_with = "no-bypass")]
+    pub bypass_on: bool,
+    /// Disable Selective arithmetic coding bypass
+    #[arg(long = "no-bypass", action = ArgAction::SetTrue, overrides_with = "bypass")]
+    pub bypass_off: bool,
 }
 
 // Normalized config used in the program
@@ -182,6 +187,7 @@ pub struct Effective {
     pub mct: bool,       // default: true
     pub tlm: bool,       // default: true
     pub plt: bool,       // default: false
+    pub bypass: bool,
 }
 impl Args {
     pub fn effective(&self) -> Effective {
@@ -200,8 +206,9 @@ impl Args {
         let mct       = resolve(self.mct_on,       self.mct_off,       true);
         let tlm       = resolve(self.tlm_on, self.tlm_off, true);   // NDK default: ON
         let plt       = resolve(self.plt_on, self.plt_off, false);  // default: OFF
+        let bypass    = resolve(self.bypass_on,    self.bypass_off,    false);
 
-        Effective { avx2, dpi_box, xmp_dpi, tp_r, precincts, sop, eph, mct, tlm, plt }
+        Effective { avx2, dpi_box, xmp_dpi, tp_r, precincts, sop, eph, mct, tlm, plt, bypass }
     }
 }
 
@@ -234,6 +241,9 @@ fn apply_archival_master_ndk_defaults(args: &mut Args) {
     // NEW: TLM ON, PLT OFF (tvrdě, ve stylu původního kódu)
     args.tlm_on = true;  args.tlm_off = false;
     args.plt_on = false; args.plt_off = true;
+
+    // NDK: enable Selective arithmetic coding bypass by default
+    args.bypass_on = true;  args.bypass_off = false;
 
     // Threads necháváme na 0 (= auto) – už default
     // args.threads = 0;
@@ -771,6 +781,13 @@ enum PixelBuf { U8(Vec<u8>), U16(Vec<u16>) }
 const J2K_CCP_CSTY_PRT: i32 = 0x01; // precinct partition
 const J2K_CCP_CSTY_SOP: i32 = 0x02; // SOP markers
 const J2K_CCP_CSTY_EPH: i32 = 0x04; // EPH markers
+// J2K code-block style bits (selective bypass etc.)
+const J2K_CCP_CBLKSTY_LAZY:   i32 = 0x01; // selective arithmetic coding bypass (CBLK_BYPASS)
+const J2K_CCP_CBLKSTY_RESET:  i32 = 0x02; // not used here
+const J2K_CCP_CBLKSTY_TERMALL:i32 = 0x04; // not used here
+const J2K_CCP_CBLKSTY_VSC:    i32 = 0x08; // not used here
+const J2K_CCP_CBLKSTY_PTERM:  i32 = 0x10; // not used here
+const J2K_CCP_CBLKSTY_SEGSYM: i32 = 0x20; // not used here
 
 /// Round up to the next power of two, respecting a minimum.
 #[inline]
@@ -783,21 +800,19 @@ fn next_pow2_at_least(x: i32, min: i32) -> i32 {
     p
 }
 
-/// Enable precincts and fill per-resolution sizes (256×256 ... 128×128).
-/// Ensures each precinct is a power of two and >= code-block size.
+/// Enable precincts and fill per-resolution sizes with the NDK pattern:
+/// for R levels: all but the last 2 resolutions use 128x128, the last 2 use 256x256.
+/// (E.g., for 6 levels → 4×128 + 2×256).
 fn fill_precincts(enc: &mut openjpeg_sys::opj_cparameters_t, levels: u32, cblk_w: i32, cblk_h: i32) {
-    // Enable precinct partitioning
     enc.csty |= J2K_CCP_CSTY_PRT;
-
-    // How many resolution-specific entries we define
     enc.res_spec = levels.min(32) as i32;
 
-    // For each resolution r: 256×256, and 128×128 at the lowest resolution
     let lvls = levels.min(32);
     for r in 0..lvls {
-        let is_last = r == lvls - 1;
-        let mut pw = if is_last { 128 } else { 256 };
-        let mut ph = if is_last { 128 } else { 256 };
+        // r==0 je nejjemnější (full-res). Poslední 2 (r = lvls-2, lvls-1) dáme 256, jinak 128.
+        let use_256 = r >= lvls.saturating_sub(2);
+        let mut pw = if use_256 { 256 } else { 128 };
+        let mut ph = pw;
 
         // Must be >= code-block and power of two
         pw = next_pow2_at_least(pw, cblk_w);
@@ -962,6 +977,11 @@ fn convert_one(input: &Path, output: &Path, args: &Args) -> Result<()> {
 
     // Reversible 5/3 transform (lossless)
     enc_params.irreversible = 0;
+
+    // Selective arithmetic coding bypass (code-block style 'LAZY')
+    if eff.bypass {
+        enc_params.mode |= J2K_CCP_CBLKSTY_LAZY;
+    }
 
     // Enable tiling
     enc_params.tile_size_on = 1;
