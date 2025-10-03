@@ -62,7 +62,7 @@ This converter implements the parameters required by the Czech national standard
 | Progression order | RPCL | ✅ |
 | Decomposition levels | 5 or 6 | ✅ |
 | Code-block size | 64×64 | ✅ |
-| Precincts | 256×256, 128×128 | ✅ |
+| Precincts | 2× 256×256, 4× 128×128 | ✅ |
 | SOP markers | Yes | ✅ |
 | EPH markers | Yes | ✅ |
 | Tile-parts (R) | Yes | ✅ |
@@ -70,6 +70,7 @@ This converter implements the parameters required by the Czech national standard
 | ROI | No | ✅ |
 | Embedded metadata | No | ✅ |
 | TLM markers | Yes | ✅ |
+| CBLK bypass | Yes | ✅ |
 
 ---
 
