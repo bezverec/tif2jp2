@@ -582,9 +582,10 @@ Jhove (Rel. 1.34.0, 2025-07-02)
      EnumCS: sRGB
 ```
 
-### jpylyzer
+### jpylyzer (v0.2.1 fix for NDK archival profile - added CBLK bypass and precincts fix)
 
 ```
+PS C:\temp\tif2jp2\target\release\jpylyzer> ./jpylyzer.exe .\Vlaltxt.jp2
 <?xml version='1.0' encoding='UTF-8'?>
 <jpylyzer xmlns="http://openpreservation.org/ns/jpylyzer/v2/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://openpreservation.org/ns/jpylyzer/v2/ http://jpylyzer.openpreservation.org/jpylyzer-v-2-2.xsd">
 <toolInfo>
@@ -593,10 +594,10 @@ Jhove (Rel. 1.34.0, 2025-07-02)
 </toolInfo>
 <file>
     <fileInfo>
-        <fileName>ilustrovany_zpravodaj_1938-06-23_cislo25_strana3.jp2</fileName>
-        <filePath>G:\temp\jpeg2000\jpylyzer\ilustrovany_zpravodaj_1938-06-23_cislo25_strana3.jp2</filePath>
-        <fileSizeInBytes>12563540</fileSizeInBytes>
-        <fileLastModified>2025-09-05T22:27:45.752050</fileLastModified>
+        <fileName>Vlaltxt.jp2</fileName>
+        <filePath>C:\temp\tif2jp2\target\release\jpylyzer\Vlaltxt.jp2</filePath>
+        <fileSizeInBytes>4382364</fileSizeInBytes>
+        <fileLastModified>2025-10-03T15:28:13.717107</fileLastModified>
     </fileInfo>
     <statusInfo>
         <success>True</success>
@@ -612,8 +613,8 @@ Jhove (Rel. 1.34.0, 2025-07-02)
         </fileTypeBox>
         <jp2HeaderBox>
             <imageHeaderBox>
-                <height>3129</height>
-                <width>3481</width>
+                <height>2142</height>
+                <width>1344</width>
                 <nC>3</nC>
                 <bPCSign>unsigned</bPCSign>
                 <bPCDepth>8</bPCDepth>
@@ -659,8 +660,8 @@ Jhove (Rel. 1.34.0, 2025-07-02)
                 <lsiz>47</lsiz>
                 <rsiz>0</rsiz>
                 <capability>ISO/IEC 15444-1</capability>
-                <xsiz>3481</xsiz>
-                <ysiz>3129</ysiz>
+                <xsiz>1344</xsiz>
+                <ysiz>2142</ysiz>
                 <xOsiz>0</xOsiz>
                 <yOsiz>0</yOsiz>
                 <xTsiz>4096</xTsiz>
@@ -693,25 +694,25 @@ Jhove (Rel. 1.34.0, 2025-07-02)
                 <levels>5</levels>
                 <codeBlockWidth>64</codeBlockWidth>
                 <codeBlockHeight>64</codeBlockHeight>
-                <codingBypass>no</codingBypass>
+                <codingBypass>yes</codingBypass>
                 <resetOnBoundaries>no</resetOnBoundaries>
                 <termOnEachPass>no</termOnEachPass>
                 <vertCausalContext>no</vertCausalContext>
                 <predTermination>no</predTermination>
                 <segmentationSymbols>no</segmentationSymbols>
                 <transformation>5-3 reversible</transformation>
+                <precinctSizeX>256</precinctSizeX>
+                <precinctSizeY>256</precinctSizeY>
+                <precinctSizeX>256</precinctSizeX>
+                <precinctSizeY>256</precinctSizeY>
                 <precinctSizeX>128</precinctSizeX>
                 <precinctSizeY>128</precinctSizeY>
-                <precinctSizeX>256</precinctSizeX>
-                <precinctSizeY>256</precinctSizeY>
-                <precinctSizeX>256</precinctSizeX>
-                <precinctSizeY>256</precinctSizeY>
-                <precinctSizeX>256</precinctSizeX>
-                <precinctSizeY>256</precinctSizeY>
-                <precinctSizeX>256</precinctSizeX>
-                <precinctSizeY>256</precinctSizeY>
-                <precinctSizeX>256</precinctSizeX>
-                <precinctSizeY>256</precinctSizeY>
+                <precinctSizeX>128</precinctSizeX>
+                <precinctSizeY>128</precinctSizeY>
+                <precinctSizeX>128</precinctSizeX>
+                <precinctSizeY>128</precinctSizeY>
+                <precinctSizeX>128</precinctSizeX>
+                <precinctSizeY>128</precinctSizeY>
             </cod>
             <qcd>
                 <lqcd>19</lqcd>
@@ -736,7 +737,7 @@ Jhove (Rel. 1.34.0, 2025-07-02)
                     <sot>
                         <lsot>10</lsot>
                         <isot>0</isot>
-                        <psot>17402</psot>
+                        <psot>4733</psot>
                         <tpsot>0</tpsot>
                         <tnsot>6</tnsot>
                     </sot>
@@ -747,7 +748,7 @@ Jhove (Rel. 1.34.0, 2025-07-02)
                     <sot>
                         <lsot>10</lsot>
                         <isot>0</isot>
-                        <psot>50608</psot>
+                        <psot>14172</psot>
                         <tpsot>1</tpsot>
                         <tnsot>6</tnsot>
                     </sot>
@@ -758,7 +759,7 @@ Jhove (Rel. 1.34.0, 2025-07-02)
                     <sot>
                         <lsot>10</lsot>
                         <isot>0</isot>
-                        <psot>209372</psot>
+                        <psot>63216</psot>
                         <tpsot>2</tpsot>
                         <tnsot>6</tnsot>
                     </sot>
@@ -769,7 +770,7 @@ Jhove (Rel. 1.34.0, 2025-07-02)
                     <sot>
                         <lsot>10</lsot>
                         <isot>0</isot>
-                        <psot>833287</psot>
+                        <psot>277809</psot>
                         <tpsot>3</tpsot>
                         <tnsot>6</tnsot>
                     </sot>
@@ -780,7 +781,7 @@ Jhove (Rel. 1.34.0, 2025-07-02)
                     <sot>
                         <lsot>10</lsot>
                         <isot>0</isot>
-                        <psot>3018447</psot>
+                        <psot>1070399</psot>
                         <tpsot>4</tpsot>
                         <tnsot>6</tnsot>
                     </sot>
@@ -791,7 +792,7 @@ Jhove (Rel. 1.34.0, 2025-07-02)
                     <sot>
                         <lsot>10</lsot>
                         <isot>0</isot>
-                        <psot>8434126</psot>
+                        <psot>2951737</psot>
                         <tpsot>5</tpsot>
                         <tnsot>6</tnsot>
                     </sot>
@@ -800,11 +801,12 @@ Jhove (Rel. 1.34.0, 2025-07-02)
                 </tilePart>
             </tileParts>
         </contiguousCodestreamBox>
-        <compressionRatio>2.6</compressionRatio>
+        <compressionRatio>1.97</compressionRatio>
     </properties>
     <warnings/>
 </file>
 </jpylyzer>
+PS C:\temp\tif2jp2\target\release\jpylyzer>
 ```
 
 ### opj_dump
