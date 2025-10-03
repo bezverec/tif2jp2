@@ -545,7 +545,7 @@ Write-Host "  .\bench.ps1 -InputDir . -Recursive -Runs 3 -Archival -Avx2" -Foreg
 
 Results may differ with different tif2jp2 flags. Mostly default settings have been tested.
 
-### jhove
+### jhove (tif2jp2 v0.2.0)
 
 ```
 Jhove (Rel. 1.34.0, 2025-07-02)
@@ -911,7 +911,7 @@ PS C:\tif2jp2\target\release\openjpeg-v2.5.4-windows-x64\bin>
 
 ```
 
-## HexDump (tif2jp2 v0.2.1 - TLM presence check)
+### HexDump (tif2jp2 v0.2.1 - TLM presence double-check)
 
 ```
 PS C:\tif2jp2\target\release\hexdump-2.1.0> .\hexdump.exe -C .\Vlaltxt.jp2 | Select-String -Pattern 'FF 55'
