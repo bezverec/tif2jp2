@@ -2,7 +2,7 @@
 ![version](https://img.shields.io/badge/dynamic/toml?url=https://raw.githubusercontent.com/bezverec/tif2jp2/main/Cargo.toml&query=$.package.version&label=version&prefix=v) ![GitHub top language](https://img.shields.io/github/languages/top/bezverec/tif2jp2) ![GitHub last commit](https://img.shields.io/github/last-commit/bezverec/tif2jp2) ![GitHub commit activity](https://img.shields.io/github/commit-activity/m/bezverec/tif2jp2) ![GitHub repo size](https://img.shields.io/github/repo-size/bezverec/tif2jp2) ![LoC](https://tokei.rs/b1/github/bezverec/tif2jp2) ![Dependencies](https://deps.rs/repo/github/bezverec/tif2jp2/status.svg)
 
 
-TIFF to JPEG2000 (JP2) lossless converter built in Rust with a thin FFI layer over OpenJPEG.
+TIFF to JPEG2000 (JP2) lossless converter built in Rust with a thin FFI layer over OpenJPEG. It also includes an OpenJPEG FFI decoder for JP2/J2K inspection and TIFF export.
 
 **Goals:** a practical, fast, no-nonsense archival path from TIFF to JP2 primarily for x86_64 machines with AVX2 SIMD; while staying compatible with common JP2 readers, while not sacrificing archival level of quality (FADGI, Metamorfoze, primarily Czech national standard: [NDK](https://standardy.ndk.cz/ndk/standardy-digitalizace/standardy-pro-obrazova-data))
 
@@ -45,12 +45,25 @@ On Windows you can use absolute path (e.g. `.\tif2jp2.exe input.tif`), if tif2jp
 ```bash
 ./tif2jp2 ./scans -o ./out --force
 ```
+
+**Inspect a JP2/J2K header**
+
+```bash
+./tif2jp2 --info image.jp2
+```
+
+**Decode JP2/J2K to TIFF**
+
+```bash
+./tif2jp2 --decode image.jp2 -o image.tif
+```
 ---
 ## Compliance with the Czech Archival Standard (NDK)
 
 This converter implements the parameters required by the Czech national standard for archival JPEG2000 masters:
 - flag `--archival-master-ndk` or `--archival`
 - not officially validated, tested only on a few samples in a specific workflow (scanner settings, postprocessing)
+- the default encode settings are intentionally close to the archival master profile; the explicit archival flag forces the full NDK profile
 
 | Parameter | Standard | Implemented |
 |-----------|----------|-------------|
@@ -131,6 +144,8 @@ Arguments:
 
 Options:
   -o, --output <OUTPUT>      Output file or directory (mirrors input structure if directory)
+      --decode               Decode JPEG2000 input to TIFF instead of encoding TIFF to JP2
+      --info                 Print JPEG2000 header information and exit
       --recursive            Recursively traverse the input directory
       --tile <WxH>           Tile size, e.g. 1024x1024 [default: 4096x4096]
       --block <WxH>          Code-block size, e.g. 64x64 [default: 64x64]
@@ -160,6 +175,8 @@ Options:
       --no-tlm               Disable TLM markers
       --plt                  Enable PLT markers (Packet Length in TPH) [default: off]
       --no-plt               Disable PLT markers
+      --bypass               Enable Selective arithmetic coding bypass (code-block LAZY) [NDK preset: on]
+      --no-bypass            Disable Selective arithmetic coding bypass
   -h, --help                 Print help
   -V, --version              Print version
 ```
@@ -201,6 +218,12 @@ tif2jp2 scan.tif -o scan.jp2 -v
 
 # Debug output (maximum verbosity)
 tif2jp2 scan.tif -o scan.jp2 -vv
+
+# Print JP2/J2K header metadata
+tif2jp2 --info scan.jp2
+
+# Decode JP2/J2K back to TIFF
+tif2jp2 --decode scan.jp2 -o scan_roundtrip.tif
 ```
 
 ---
@@ -210,8 +233,16 @@ tif2jp2 scan.tif -o scan.jp2 -vv
 ### ICC Profiles
 - **Automatic**: extracted from TIFF if present  
 - **Manual override**: `--icc profile.icc`  
+- **Decoding**: JP2 ICC profiles are copied into TIFF tag 34675 when OpenJPEG exposes them
 
 ⚠️ Some TIFF ICCs may be incomplete → for archival use, supply a known good profile.
+
+### Encoder Parameter Preservation
+- JP2 resolution boxes (`resc`/`resd`) are inserted after encoding so DPI survives readers that ignore TIFF-only metadata.
+- Optional XMP DPI can be appended as a UUID box via `--xmp-dpi`.
+- OpenJPEG extra options preserve TLM/PLT marker control.
+- NDK-relevant coding flags remain available: RPCL, 4096x4096 tiles, 64x64 code-blocks, 6 resolutions, precincts, SOP/EPH, tile-parts by resolution, reversible MCT, TLM, and CBLK bypass.
+- Encoder parameters are now applied once from the effective CLI configuration, so custom options such as `--order`, `--no-sop`, `--no-precincts`, or `--no-bypass` are not silently overwritten unless the explicit `--archival` preset is used.
 
 ---
 
@@ -224,8 +255,8 @@ tif2jp2 scan.tif -o scan.jp2 -vv
 
 ## Troubleshooting
 
-- `"No input TIFFs found"` → check path or use `--recursive`  
-- `"File is not a TIFF"` → only `.tif`/`.tiff` supported  
+- `"No input files found"` → check path or use `--recursive`
+- Encode mode accepts `.tif`/`.tiff`; `--decode` and `--info` accept `.jp2`, `.j2k`, `.j2c`, `.jpc`.
 - **Unsupported** → CMYK & alpha channels (RGBA) not supported (convert to RGB first)  
 
 ---
@@ -234,7 +265,7 @@ tif2jp2 scan.tif -o scan.jp2 -vv
 ❌ CMYK color space not supported  
 ❌ Alpha channels (RGBA) not supported  
 ❌ Limited to 8/16-bit grayscale or RGB images  
-❌ Progressive decoding not implemented  
+❌ JP2/J2K decoding currently writes full-image TIFF output only; region/tile extraction is not exposed in this CLI yet
 
 ## AI generated code disclosure
 The code is AI generated using ChatGPT model 5 and Deepseek v3.x.
