@@ -7,23 +7,7 @@ use openjpeg_sys as opj;
 use tiff::encoder::{TiffEncoder, colortype};
 use tiff::tags::Tag;
 
-#[derive(Debug, Clone)]
-pub struct Jp2Info {
-    pub width: u32,
-    pub height: u32,
-    pub components: Vec<Jp2ComponentInfo>,
-    pub icc_profile_len: u32,
-}
-
-#[derive(Debug, Clone, Copy)]
-pub struct Jp2ComponentInfo {
-    pub width: u32,
-    pub height: u32,
-    pub dx: u32,
-    pub dy: u32,
-    pub precision: u32,
-    pub signed: bool,
-}
+use crate::info::{Jp2ComponentInfo, Jp2Info};
 
 struct DecodedImage {
     width: u32,

@@ -1,44 +1,29 @@
 mod decoder;
+mod encoder;
+mod info;
 
-use anyhow::{Context, Result, anyhow};
-use clap::{ArgAction, Parser};
 use std::{
-    ffi::CString,
-    fs::{self, File},
-    io::{Read, Write},
+    fs,
+    io::Write,
     path::{Path, PathBuf},
     time::Instant,
 };
-use tiff::ColorType;
-use tiff::decoder::ifd::Value;
-use tiff::decoder::{Decoder, DecodingResult};
-use tiff::tags::Tag;
+
+use anyhow::{Context, Result, anyhow};
+use clap::{ArgAction, Parser};
+use encoder::{Effective, EncodeOptions};
 use walkdir::WalkDir;
-
-use openjpeg_sys::opj_encoder_set_extra_options;
-use std::ffi::c_char;
-
-use libc::malloc;
-
-use openjpeg_sys::{
-    CODEC_FORMAT, COLOR_SPACE, PROG_ORDER, opj_codec_set_threads, opj_codec_t, opj_cparameters_t,
-    opj_create_compress, opj_destroy_codec, opj_encode, opj_end_compress, opj_image_cmptparm_t,
-    opj_image_create, opj_image_destroy, opj_image_t, opj_set_default_encoder_parameters,
-    opj_setup_encoder, opj_start_compress, opj_stream_create_default_file_stream,
-    opj_stream_destroy, opj_stream_t,
-};
-
-// Rayon for parallel row processing (de-interleave)
-use rayon::prelude::*;
 
 /// Tiny logger with verbosity levels (0 = errors only, 1 = info)
 struct Log {
     lvl: u8,
 }
+
 impl Log {
     fn new(lvl: u8) -> Self {
         Self { lvl }
     }
+
     #[inline]
     fn v1(&self, msg: impl AsRef<str>) {
         if self.lvl >= 1 {
@@ -108,7 +93,6 @@ pub struct Args {
     #[arg(long = "archival-master-ndk", alias = "archival", action = ArgAction::SetTrue)]
     pub archival_master_ndk: bool,
 
-    // ---------- toggles: define positive + negative as SEPARATE flags ----------
     /// Write DPI into JP2 'res' box [default: on]
     #[arg(long = "dpi-box", action = ArgAction::SetTrue, overrides_with = "dpi_box_off")]
     pub dpi_box_on: bool,
@@ -137,7 +121,7 @@ pub struct Args {
     #[arg(long = "no-tp-r", action = ArgAction::SetTrue, overrides_with = "tp_r_on")]
     pub tp_r_off: bool,
 
-    /// Enable precinct partitioning (256x256 … 128x128) [default: on]
+    /// Enable precinct partitioning (256x256 ... 128x128) [default: on]
     #[arg(long = "precincts", action = ArgAction::SetTrue, overrides_with = "precincts_off")]
     pub precincts_on: bool,
     /// Disable precinct partitioning
@@ -184,6 +168,7 @@ pub struct Args {
     /// Disable PLT markers
     #[arg(long = "no-plt", action = ArgAction::SetTrue, overrides_with = "plt_on")]
     pub plt_off: bool,
+
     /// Enable Selective arithmetic coding bypass (code-block LAZY) [NDK preset: on]
     #[arg(long = "bypass", action = ArgAction::SetTrue, overrides_with = "bypass_off")]
     pub bypass_on: bool,
@@ -192,20 +177,6 @@ pub struct Args {
     pub bypass_off: bool,
 }
 
-// Normalized config used in the program
-pub struct Effective {
-    pub avx2: bool,      // default: false
-    pub dpi_box: bool,   // default: true
-    pub xmp_dpi: bool,   // default: false
-    pub tp_r: bool,      // default: true
-    pub precincts: bool, // default: true
-    pub sop: bool,       // default: true
-    pub eph: bool,       // default: true
-    pub mct: bool,       // default: true
-    pub tlm: bool,       // default: true
-    pub plt: bool,       // default: false
-    pub bypass: bool,
-}
 impl Args {
     fn operation(&self) -> Operation {
         if self.info {
@@ -217,7 +188,19 @@ impl Args {
         }
     }
 
-    pub fn effective(&self) -> Effective {
+    fn encode_options(&self) -> EncodeOptions {
+        EncodeOptions {
+            tile: self.tile.clone(),
+            block: self.block.clone(),
+            levels: self.levels.clone(),
+            threads: self.threads,
+            icc: self.icc.clone(),
+            order: self.order.clone(),
+            toggles: self.effective(),
+        }
+    }
+
+    fn effective(&self) -> Effective {
         #[inline]
         fn resolve(on: bool, off: bool, default_: bool) -> bool {
             if on {
@@ -229,30 +212,18 @@ impl Args {
             }
         }
 
-        let dpi_box = resolve(self.dpi_box_on, self.dpi_box_off, true);
-        let xmp_dpi = resolve(self.xmp_dpi_on, self.xmp_dpi_off, false);
-        let avx2 = resolve(self.avx2_on, self.avx2_off, false);
-        let tp_r = resolve(self.tp_r_on, self.tp_r_off, true);
-        let precincts = resolve(self.precincts_on, self.precincts_off, true);
-        let sop = resolve(self.sop_on, self.sop_off, true);
-        let eph = resolve(self.eph_on, self.eph_off, true);
-        let mct = resolve(self.mct_on, self.mct_off, true);
-        let tlm = resolve(self.tlm_on, self.tlm_off, true); // NDK default: ON
-        let plt = resolve(self.plt_on, self.plt_off, false); // default: OFF
-        let bypass = resolve(self.bypass_on, self.bypass_off, true);
-
         Effective {
-            avx2,
-            dpi_box,
-            xmp_dpi,
-            tp_r,
-            precincts,
-            sop,
-            eph,
-            mct,
-            tlm,
-            plt,
-            bypass,
+            avx2: resolve(self.avx2_on, self.avx2_off, false),
+            dpi_box: resolve(self.dpi_box_on, self.dpi_box_off, true),
+            xmp_dpi: resolve(self.xmp_dpi_on, self.xmp_dpi_off, false),
+            tp_r: resolve(self.tp_r_on, self.tp_r_off, true),
+            precincts: resolve(self.precincts_on, self.precincts_off, true),
+            sop: resolve(self.sop_on, self.sop_off, true),
+            eph: resolve(self.eph_on, self.eph_off, true),
+            mct: resolve(self.mct_on, self.mct_off, true),
+            tlm: resolve(self.tlm_on, self.tlm_off, true),
+            plt: resolve(self.plt_on, self.plt_off, false),
+            bypass: resolve(self.bypass_on, self.bypass_off, true),
         }
     }
 }
@@ -265,53 +236,36 @@ enum Operation {
 }
 
 fn apply_archival_master_ndk_defaults(args: &mut Args) {
-    // Hard defaults for NDK profile
     args.tile = "4096x4096".into();
     args.block = "64x64".into();
     args.levels = "6".into();
     args.order = "RPCL".into();
 
-    // Ensure toggles are ON (use the “on/off” páry správně)
     args.dpi_box_on = true;
     args.dpi_box_off = false;
     args.xmp_dpi_on = false;
     args.xmp_dpi_off = false;
-    args.avx2_off = false; // AVX2 necháváme na uživateli (výchozí off). Přes --avx2 zapne.
+    args.avx2_off = false;
 
-    // Tile-parts by Resolution (R)
     args.tp_r_on = true;
     args.tp_r_off = false;
-
-    // Precincts 256..128
     args.precincts_on = true;
     args.precincts_off = false;
-
-    // SOP/EPH markers
     args.sop_on = true;
     args.sop_off = false;
     args.eph_on = true;
     args.eph_off = false;
-
-    // Reversible MCT for RGB
     args.mct_on = true;
     args.mct_off = false;
-
-    // NEW: TLM ON, PLT OFF (tvrdě, ve stylu původního kódu)
     args.tlm_on = true;
     args.tlm_off = false;
     args.plt_on = false;
     args.plt_off = true;
-
-    // NDK: enable Selective arithmetic coding bypass by default
     args.bypass_on = true;
     args.bypass_off = false;
-
-    // Threads necháváme na 0 (= auto) – už default
-    // args.threads = 0;
 }
 
 fn main() -> Result<()> {
-    // Make it mutable because we'll tweak fields via the preset.
     let mut args = Args::parse();
     let operation = args.operation();
 
@@ -323,41 +277,32 @@ fn main() -> Result<()> {
     }
 
     let log = Log::new(args.verbose);
-
     log.v1(format!("Input:  {}", args.input.display()));
     if let Some(out) = &args.output {
         log.v1(format!("Output: {}", out.display()));
     }
 
-    // Create output dir if necessary
     if let Some(out_dir) = &args.output {
         if out_dir.is_dir() || (!out_dir.exists() && args.input.is_dir()) {
             fs::create_dir_all(out_dir).context("Creating output directory")?;
         }
     }
 
-    let inputs = collect_inputs(
-        &args.input,
-        args.recursive,
-        args.output.as_deref(),
-        operation,
-    )?;
+    let inputs = collect_inputs(&args.input, args.recursive, operation)?;
     log.v1(format!("Found {} input file(s).", inputs.len()));
-
     if inputs.is_empty() {
         return Err(anyhow!("No input files found"));
     }
 
+    let encode_options = args.encode_options();
     for (idx, input) in inputs.iter().enumerate() {
         if operation == Operation::Info {
-            let info = decoder::read_info(input, openjpeg_threads(args.threads)?)?;
-            print_jp2_info(input, &info);
+            let info = decoder::read_info(input, info::openjpeg_threads(args.threads)?)?;
+            info::print_jp2_info(input, &info);
             continue;
         }
 
         let out = derive_output_path(&args, input, operation)?;
-
-        // check output dir, create if not present
         if let Some(parent) = out.parent() {
             if !parent.exists() {
                 fs::create_dir_all(parent).context("Creating output subdirectory")?;
@@ -370,7 +315,7 @@ fn main() -> Result<()> {
         }
 
         eprintln!(
-            "({}/{}) → Processing: {} -> {}",
+            "({}/{}) -> Processing: {} -> {}",
             idx + 1,
             inputs.len(),
             input.display(),
@@ -378,11 +323,10 @@ fn main() -> Result<()> {
         );
         let t0 = Instant::now();
 
-        // Isolate 1 conversion
         let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| match operation {
-            Operation::Encode => convert_one(input, &out, &args),
+            Operation::Encode => encoder::encode_tiff_to_jp2(input, &out, &encode_options),
             Operation::Decode => {
-                decoder::decode_to_tiff(input, &out, openjpeg_threads(args.threads)?)
+                decoder::decode_to_tiff(input, &out, info::openjpeg_threads(args.threads)?)
             }
             Operation::Info => unreachable!("info mode is handled before output derivation"),
         }));
@@ -390,31 +334,27 @@ fn main() -> Result<()> {
         match result {
             Ok(Ok(())) => {
                 let dt = t0.elapsed();
-                eprintln!("✔ {} → {} ({:.2?})", input.display(), out.display(), dt);
+                eprintln!("OK {} -> {} ({:.2?})", input.display(), out.display(), dt);
             }
             Ok(Err(e)) => {
-                eprintln!("✖ {} — Error: {}", input.display(), e);
+                eprintln!("ERR {} - Error: {}", input.display(), e);
             }
             Err(panic) => {
-                // Better panic info catching
                 if let Some(s) = panic.downcast_ref::<&str>() {
-                    eprintln!("✖ {} — Panic during conversion: {}", input.display(), s);
+                    eprintln!("ERR {} - Panic during conversion: {}", input.display(), s);
                 } else if let Some(s) = panic.downcast_ref::<String>() {
-                    eprintln!("✖ {} — Panic during conversion: {}", input.display(), s);
+                    eprintln!("ERR {} - Panic during conversion: {}", input.display(), s);
                 } else {
                     eprintln!(
-                        "✖ {} — Panic during conversion: <unknown reason>",
+                        "ERR {} - Panic during conversion: <unknown reason>",
                         input.display()
                     );
                 }
             }
         }
 
-        // Flush
         let _ = std::io::stderr().flush();
         let _ = std::io::stdout().flush();
-
-        // Short pause for system stabilization
         std::thread::sleep(std::time::Duration::from_millis(100));
     }
 
@@ -422,14 +362,7 @@ fn main() -> Result<()> {
     Ok(())
 }
 
-/// Collects input TIFF files based on a root path and recursion flag.
-/// Excludes the output directory (if it is inside the input root).
-fn collect_inputs(
-    root: &Path,
-    recursive: bool,
-    _out_dir: Option<&Path>,
-    operation: Operation,
-) -> Result<Vec<PathBuf>> {
+fn collect_inputs(root: &Path, recursive: bool, operation: Operation) -> Result<Vec<PathBuf>> {
     let mut files = Vec::new();
 
     if root.is_file() {
@@ -460,29 +393,13 @@ fn collect_inputs(
     Ok(files)
 }
 
-/// Basic extension check (.tif / .tiff), case-insensitive.
-fn is_tiff(p: &Path) -> bool {
-    matches!(
-        p.extension().and_then(|s| s.to_str()).map(|s| s.to_ascii_lowercase()),
-        Some(ref ext) if ext == "tif" || ext == "tiff"
-    )
-}
-
-fn is_jpeg2000(p: &Path) -> bool {
-    matches!(
-        p.extension().and_then(|s| s.to_str()).map(|s| s.to_ascii_lowercase()),
-        Some(ref ext) if matches!(ext.as_str(), "jp2" | "j2k" | "j2c" | "jpc")
-    )
-}
-
 fn accepts_input(path: &Path, operation: Operation) -> bool {
     match operation {
-        Operation::Encode => is_tiff(path),
-        Operation::Decode | Operation::Info => is_jpeg2000(path),
+        Operation::Encode => info::is_tiff(path),
+        Operation::Decode | Operation::Info => info::is_jpeg2000(path),
     }
 }
 
-/// Derives output path from args and input, handling file/dir modes.
 fn derive_output_path(args: &Args, input: &Path, operation: Operation) -> Result<PathBuf> {
     let extension = match operation {
         Operation::Encode => "jp2",
@@ -506,1109 +423,11 @@ fn derive_output_path(args: &Args, input: &Path, operation: Operation) -> Result
         None => input.with_extension(extension),
     };
 
-    // Path normalization for Windows
-    let normalized_path = result.to_string_lossy().replace('\\', "/");
-    let normalized_path = PathBuf::from(normalized_path);
-
+    let normalized_path = PathBuf::from(result.to_string_lossy().replace('\\', "/"));
     eprintln!(
         "Input: {} -> Output: {}",
         input.display(),
         normalized_path.display()
     );
     Ok(normalized_path)
-}
-
-/// Parses "WxH" string into (width, height).
-fn parse_wh(s: &str) -> Result<(u32, u32)> {
-    let (w, h) = s
-        .split_once('x')
-        .ok_or_else(|| anyhow!("Use format WxH, e.g. 1024x1024"))?;
-    Ok((w.parse()?, h.parse()?))
-}
-
-/// Heuristic for number of wavelet resolution levels (clamped to 3..=8).
-fn auto_levels(w: u32, h: u32) -> u32 {
-    let m = w.min(h) as f32;
-    let mut k = (m.log2().floor() as i32) - 1;
-    if k < 1 {
-        k = 1;
-    }
-    (k as u32).clamp(3, 8)
-}
-
-#[inline]
-fn parse_order(s: &str) -> PROG_ORDER {
-    match s.to_ascii_uppercase().as_str() {
-        "LRCP" => PROG_ORDER::OPJ_LRCP,
-        "RLCP" => PROG_ORDER::OPJ_RLCP,
-        "RPCL" => PROG_ORDER::OPJ_RPCL,
-        "PCRL" => PROG_ORDER::OPJ_PCRL,
-        "CPRL" => PROG_ORDER::OPJ_CPRL,
-        _ => PROG_ORDER::OPJ_RPCL, // safe fallback
-    }
-}
-
-// --- TIFF metadata (DPI + ICC) ------------------------------------------------
-
-#[derive(Clone, Copy)]
-enum ResUnit {
-    Inch,
-    Centimeter,
-    None,
-}
-
-struct TiffMeta {
-    xdpi: Option<f64>,
-    ydpi: Option<f64>,
-    unit: ResUnit,
-    icc: Option<Vec<u8>>,
-}
-
-/// Reads basic metadata: X/Y resolution + unit, and best-effort ICC.
-/// Note: with tiff 0.9.x the ICC tag (34675) may come as a single Byte/Ascii,
-/// which is not a full profile. For archival use, prefer --icc <path.icc>.
-fn read_tiff_meta(p: &Path) -> Result<TiffMeta> {
-    let f = File::open(p)?;
-    let mut dec = Decoder::new(std::io::BufReader::new(f))?;
-
-    // Resolution
-    let mut xdpi = None;
-    let mut ydpi = None;
-    let mut unit = ResUnit::None;
-
-    if let Ok(v) = dec.get_tag(Tag::XResolution) {
-        if let Value::Rational(a, b) = v {
-            if b != 0 {
-                xdpi = Some(a as f64 / b as f64);
-            }
-        }
-    }
-    if let Ok(v) = dec.get_tag(Tag::YResolution) {
-        if let Value::Rational(a, b) = v {
-            if b != 0 {
-                ydpi = Some(a as f64 / b as f64);
-            }
-        }
-    }
-    if let Ok(v) = dec.get_tag(Tag::ResolutionUnit) {
-        if let Value::Short(u) = v {
-            unit = match u {
-                2 => ResUnit::Inch,
-                3 => ResUnit::Centimeter,
-                _ => ResUnit::None,
-            };
-        }
-    }
-
-    // ICC (tag 34675) – often a single Byte/Ascii in tiff 0.9.x; not a full profile.
-    let mut icc: Option<Vec<u8>> = None;
-    if let Ok(v) = dec.get_tag(Tag::Unknown(34675)) {
-        match v {
-            Value::Byte(b) => icc = Some(vec![b]),
-            Value::Ascii(s) => icc = Some(s.into_bytes()),
-            _ => {}
-        }
-    }
-
-    Ok(TiffMeta {
-        xdpi,
-        ydpi,
-        unit,
-        icc,
-    })
-}
-
-// --- OpenJPEG helpers ----------------------------------------------------------
-
-/// Attach ICC buffer to OpenJPEG image (takes ownership via raw pointer).
-unsafe fn attach_icc(img: *mut opj_image_t, icc: &[u8]) {
-    if img.is_null() || icc.is_empty() {
-        return;
-    }
-    let ptr = unsafe { malloc(icc.len()) };
-    if ptr.is_null() {
-        return;
-    }
-    unsafe {
-        std::ptr::copy_nonoverlapping(icc.as_ptr(), ptr as *mut u8, icc.len());
-        (*img).icc_profile_buf = ptr as *mut u8;
-        (*img).icc_profile_len = icc.len() as u32;
-    }
-}
-
-// --- JP2 Resolution box (embed DPI into jp2h/resc+resd) -----------------------
-
-#[derive(Clone, Copy)]
-enum PpmUnit {
-    Inch,
-    Centimeter,
-}
-
-/// Convert DPI to pixels-per-metre as used by JP2 resolution boxes.
-fn dpi_to_ppm(dpi: f64, unit: PpmUnit) -> f64 {
-    match unit {
-        PpmUnit::Inch => dpi / 0.0254,
-        PpmUnit::Centimeter => dpi / 0.01,
-    }
-}
-
-/// Převod ppm na JP2 trojici (N,D,E) s preferencí E=0.
-/// ppm = N / D * 10^E, kde N,D ∈ [1..=65535], E ∈ [0..=6]
-fn ppm_to_jp2_triplet(ppm: f64) -> (u16, u16, u8) {
-    if !ppm.is_finite() || ppm <= 0.0 {
-        return (1, 1, 0);
-    }
-
-    // 1) Zkus E=0 s "hezkými" jmenovateli – co nejpřesnější aproximace
-    let dens = [1u32, 10, 100, 1000, 10000, 65535];
-    let mut best = (0u16, 1u16, 0u8);
-    let mut err_best = f64::INFINITY;
-    for &den in &dens {
-        let numf = ppm * den as f64;
-        if numf > 0.0 && numf <= 65535.0 {
-            let num = numf.round();
-            let approx = num / den as f64;
-            let err = (approx - ppm).abs();
-            if err < err_best {
-                err_best = err;
-                best = (num as u16, den as u16, 0);
-                if err < 1e-6 {
-                    return best;
-                }
-            }
-        }
-    }
-    if best.0 != 0 {
-        return best;
-    }
-
-    // 2) Když je ppm moc velké, zvyšuj E, ať se N vejde do 16 bitů
-    let mut val = ppm;
-    let mut e: u8 = 0;
-    while val > 65535.0 && e < 6 {
-        val /= 10.0;
-        e += 1;
-    }
-    let n = val.round().clamp(1.0, 65535.0) as u16;
-    (n, 1, e)
-}
-
-/// Payload 'resc'/'resd' – pořadí: vN vD hN hD vE hE  (celkem 2+2+2+2+1+1 = 10 bajtů)
-fn build_resc_resd_payload(v_ppm: f64, h_ppm: f64) -> Vec<u8> {
-    let (v_n, v_d, v_e) = ppm_to_jp2_triplet(v_ppm);
-    let (h_n, h_d, h_e) = ppm_to_jp2_triplet(h_ppm);
-
-    let mut v = Vec::with_capacity(10);
-    // vN, vD
-    v.extend_from_slice(&v_n.to_be_bytes());
-    v.extend_from_slice(&v_d.to_be_bytes());
-    // hN, hD
-    v.extend_from_slice(&h_n.to_be_bytes());
-    v.extend_from_slice(&h_d.to_be_bytes());
-    // vE, hE
-    v.push(v_e);
-    v.push(h_e);
-    v
-}
-
-fn be_u32(b: &[u8]) -> u32 {
-    u32::from_be_bytes([b[0], b[1], b[2], b[3]])
-}
-fn put_be_u32(x: u32, out: &mut Vec<u8>) {
-    out.extend_from_slice(&x.to_be_bytes());
-}
-
-/// Inserts a 'res ' superbox with 'resc' + 'resd' into 'jp2h'.
-/// If the structure is atypical (e.g., XLBox), it silently returns without changes.
-fn insert_resolution_box_jp2(path: &Path, xdpi: f64, ydpi: f64, unit: ResUnit) -> Result<()> {
-    let data = std::fs::read(path)?;
-
-    // Locate 'jp2h' among top-level boxes.
-    let mut off = 0usize;
-    let mut jp2h_pos: Option<(usize, usize)> = None;
-    while off + 8 <= data.len() {
-        let lbox = be_u32(&data[off..off + 4]) as u64;
-        let tbox = &data[off + 4..off + 8];
-        let blen = if lbox == 0 {
-            (data.len() - off) as u64
-        } else {
-            lbox
-        };
-        if tbox == b"jp2h" {
-            jp2h_pos = Some((off, blen as usize));
-            break;
-        }
-        off += blen as usize;
-    }
-    let (jp2h_off, jp2h_len) = match jp2h_pos {
-        Some(v) => v,
-        None => return Ok(()),
-    };
-
-    // 'jp2h' header is 8 bytes (LBox+TBox)
-    let jp2h_payload_start = jp2h_off + 8;
-    let jp2h_payload_end = jp2h_off + jp2h_len;
-    if jp2h_payload_end > data.len() || jp2h_payload_start > jp2h_payload_end {
-        return Ok(());
-    }
-    let old_payload = &data[jp2h_payload_start..jp2h_payload_end];
-
-    // Convert DPI → PPM using TIFF unit
-    let unit_ppm = match unit {
-        ResUnit::Inch => PpmUnit::Inch,
-        ResUnit::Centimeter => PpmUnit::Centimeter,
-        ResUnit::None => PpmUnit::Inch,
-    };
-    let v_ppm = dpi_to_ppm(ydpi, unit_ppm);
-    let h_ppm = dpi_to_ppm(xdpi, unit_ppm);
-
-    // Build 'res ' superbox with 'resc' and 'resd'
-    let resc_p = build_resc_resd_payload(v_ppm, h_ppm);
-    let resd_p = build_resc_resd_payload(v_ppm, h_ppm);
-    let resc_len = 8 + resc_p.len() as u32; // LBox(4) + TBox(4) + payload
-    let resd_len = 8 + resd_p.len() as u32;
-
-    // !!! FIX: LBox superboxu = 8 + součet podboxů (už včetně jejich 8 bajtů hlavičky)
-    let total_res_payload = resc_len + resd_len; // žádné další „+8“ navíc
-
-    let mut res_super = Vec::with_capacity((8 + total_res_payload) as usize);
-    put_be_u32(8 + total_res_payload, &mut res_super); // LBox superboxu
-    res_super.extend_from_slice(b"res ");
-
-    // 'resc'
-    put_be_u32(resc_len, &mut res_super);
-    res_super.extend_from_slice(b"resc");
-    res_super.extend_from_slice(&resc_p);
-
-    // 'resd'
-    put_be_u32(resd_len, &mut res_super);
-    res_super.extend_from_slice(b"resd");
-    res_super.extend_from_slice(&resd_p);
-
-    // Rebuild file with extended 'jp2h'
-    let new_jp2h_len = (jp2h_len as u32).saturating_add(res_super.len() as u32);
-
-    let mut new = Vec::with_capacity(data.len() + res_super.len());
-    new.extend_from_slice(&data[..jp2h_off]);
-    put_be_u32(new_jp2h_len, &mut new);
-    new.extend_from_slice(b"jp2h");
-    new.extend_from_slice(old_payload);
-    new.extend_from_slice(&res_super);
-    new.extend_from_slice(&data[jp2h_payload_end..]);
-
-    std::fs::write(path, &new)?;
-    Ok(())
-}
-
-// --- XMP DPI fallback ----------------------------------------------------------
-
-/// Builds a minimal XMP packet carrying TIFF-style resolution metadata.
-fn build_xmp_with_dpi(xdpi: f64, ydpi: f64, unit: ResUnit) -> String {
-    let unit_val = match unit {
-        ResUnit::Inch => 2,
-        ResUnit::Centimeter => 3,
-        ResUnit::None => 1,
-    };
-    let xr = format!("{}/{}", (xdpi * 1000.0).round() as u64, 1000u64);
-    let yr = format!("{}/{}", (ydpi * 1000.0).round() as u64, 1000u64);
-    format!(
-        r#"<x:xmpmeta xmlns:x="adobe:ns:meta/">
- <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
-  <rdf:Description xmlns:tiff="http://ns.adobe.com/tiff/1.0/"
-    tiff:XResolution="{xr}"
-    tiff:YResolution="{yr}"
-    tiff:ResolutionUnit="{unit_val}"/>
- </rdf:RDF>
-</x:xmpmeta>"#
-    )
-}
-
-/// Appends an XMP UUID box at the end of the JP2 file.
-fn append_jp2_xmp_box(path: &Path, xmp_xml: &[u8]) -> Result<()> {
-    const XMP_UUID: [u8; 16] = [
-        0xBE, 0x7A, 0xCF, 0xCB, 0x97, 0xA9, 0x42, 0xE8, 0x9C, 0x71, 0x99, 0x94, 0x91, 0xE3, 0xAF,
-        0xAC,
-    ];
-    let mut f = fs::OpenOptions::new().append(true).open(path)?;
-    let total_len = 8u32 + 16u32 + xmp_xml.len() as u32;
-    f.write_all(&total_len.to_be_bytes())?;
-    f.write_all(b"uuid")?;
-    f.write_all(&XMP_UUID)?;
-    f.write_all(xmp_xml)?;
-    Ok(())
-}
-
-// --- AVX2 fast paths -----------------------------------------------------------
-
-// x86_64: wrapper with runtime AVX2 check
-#[cfg(target_arch = "x86_64")]
-#[inline]
-fn widen_u16_to_i32_avx2(src: &[u16], dst: &mut [i32]) -> bool {
-    if !std::is_x86_feature_detected!("avx2") {
-        return false;
-    }
-    unsafe { widen_u16_to_i32_avx2_inner(src, dst) }
-    true
-}
-
-// x86_64: AVX2 implementation
-#[cfg(target_arch = "x86_64")]
-#[allow(unsafe_op_in_unsafe_fn)]
-#[target_feature(enable = "avx2")]
-unsafe fn widen_u16_to_i32_avx2_inner(src: &[u16], dst: &mut [i32]) {
-    use core::arch::x86_64::*;
-    let mut i = 0usize;
-    let n = src.len();
-
-    while i + 16 <= n {
-        // Load 16×u16 as two 128-bit lanes
-        let base_u16 = src.as_ptr();
-        let lo128 = _mm_loadu_si128(base_u16.cast::<__m128i>().add(i));
-        let hi128 = _mm_loadu_si128(base_u16.cast::<__m128i>().add(i + 8));
-        // Widen to i32 vectors
-        let lo = _mm256_cvtepu16_epi32(lo128);
-        let hi = _mm256_cvtepu16_epi32(hi128);
-        // Store to destination
-        let base_i32 = dst.as_mut_ptr();
-        _mm256_storeu_si256(base_i32.cast::<__m256i>().add(i), lo);
-        _mm256_storeu_si256(base_i32.cast::<__m256i>().add(i + 8), hi);
-        i += 16;
-    }
-
-    // Scalar tail
-    for k in i..n {
-        dst[k] = src[k] as i32;
-    }
-}
-
-/// AVX2 de-interleave for **RGB8 one row**, 8 pixels per iteration using gathers.
-#[cfg(target_arch = "x86_64")]
-#[allow(unsafe_op_in_unsafe_fn)]
-#[target_feature(enable = "avx2")]
-unsafe fn deinterleave_rgb8_row_avx2(
-    src_row: *const u8,
-    n: usize,
-    dst_r: *mut i32,
-    dst_g: *mut i32,
-    dst_b: *mut i32,
-) {
-    use core::arch::x86_64::*;
-    let mut x = 0usize;
-    let m_ff = _mm256_set1_epi32(0xFF);
-
-    while x + 8 <= n {
-        // Build byte offsets for 8 consecutive pixels
-        let off_r = [
-            (3 * (x + 0) + 0) as i32,
-            (3 * (x + 1) + 0) as i32,
-            (3 * (x + 2) + 0) as i32,
-            (3 * (x + 3) + 0) as i32,
-            (3 * (x + 4) + 0) as i32,
-            (3 * (x + 5) + 0) as i32,
-            (3 * (x + 6) + 0) as i32,
-            (3 * (x + 7) + 0) as i32,
-        ];
-        let off_g = [
-            off_r[0] + 1,
-            off_r[1] + 1,
-            off_r[2] + 1,
-            off_r[3] + 1,
-            off_r[4] + 1,
-            off_r[5] + 1,
-            off_r[6] + 1,
-            off_r[7] + 1,
-        ];
-        let off_b = [
-            off_r[0] + 2,
-            off_r[1] + 2,
-            off_r[2] + 2,
-            off_r[3] + 2,
-            off_r[4] + 2,
-            off_r[5] + 2,
-            off_r[6] + 2,
-            off_r[7] + 2,
-        ];
-
-        let idx_r = _mm256_loadu_si256(off_r.as_ptr() as *const __m256i);
-        let idx_g = _mm256_loadu_si256(off_g.as_ptr() as *const __m256i);
-        let idx_b = _mm256_loadu_si256(off_b.as_ptr() as *const __m256i);
-
-        // Gather 32-bit words at byte offsets; mask low byte
-        let base_i32 = src_row as *const i32;
-        let gr = _mm256_i32gather_epi32(base_i32, idx_r, 1);
-        let gg = _mm256_i32gather_epi32(base_i32, idx_g, 1);
-        let gb = _mm256_i32gather_epi32(base_i32, idx_b, 1);
-
-        let rr = _mm256_and_si256(gr, m_ff);
-        let rg = _mm256_and_si256(gg, m_ff);
-        let rb = _mm256_and_si256(gb, m_ff);
-
-        // store to dst pointers using add() + cast to __m256i
-        _mm256_storeu_si256(dst_r.add(x) as *mut __m256i, rr);
-        _mm256_storeu_si256(dst_g.add(x) as *mut __m256i, rg);
-        _mm256_storeu_si256(dst_b.add(x) as *mut __m256i, rb);
-
-        x += 8;
-    }
-
-    // Scalar tail
-    for i in x..n {
-        let p = src_row.add(3 * i);
-        *dst_r.add(i) = *p as i32;
-        *dst_g.add(i) = *p.add(1) as i32;
-        *dst_b.add(i) = *p.add(2) as i32;
-    }
-}
-
-// --- Pixel buffer enum ---------------------------------------------------------
-
-enum PixelBuf {
-    U8(Vec<u8>),
-    U16(Vec<u16>),
-}
-
-// J2K code-style flags (mirror of OpenJPEG defines)
-const J2K_CCP_CSTY_PRT: i32 = 0x01; // precinct partition
-const J2K_CCP_CSTY_SOP: i32 = 0x02; // SOP markers
-const J2K_CCP_CSTY_EPH: i32 = 0x04; // EPH markers
-// J2K code-block style bits (selective bypass etc.)
-const J2K_CCP_CBLKSTY_LAZY: i32 = 0x01; // selective arithmetic coding bypass (CBLK_BYPASS)
-
-/// Round up to the next power of two, respecting a minimum.
-#[inline]
-fn next_pow2_at_least(x: i32, min: i32) -> i32 {
-    let v = x.max(min).max(1);
-    let mut p = 1;
-    while p < v && p < 32768 {
-        p <<= 1;
-    }
-    p
-}
-
-/// Enable precincts and fill per-resolution sizes with the NDK pattern:
-/// for R levels: all but the last 2 resolutions use 128x128, the last 2 use 256x256.
-/// (E.g., for 6 levels → 4×128 + 2×256).
-fn fill_precincts(
-    enc: &mut openjpeg_sys::opj_cparameters_t,
-    levels: u32,
-    cblk_w: i32,
-    cblk_h: i32,
-) {
-    enc.csty |= J2K_CCP_CSTY_PRT;
-    enc.res_spec = levels.min(32) as i32;
-
-    let lvls = levels.min(32);
-    for r in 0..lvls {
-        // r==0 je nejjemnější (full-res). Poslední 2 (r = lvls-2, lvls-1) dáme 256, jinak 128.
-        let use_256 = r >= lvls.saturating_sub(2);
-        let mut pw = if use_256 { 256 } else { 128 };
-        let mut ph = pw;
-
-        // Must be >= code-block and power of two
-        pw = next_pow2_at_least(pw, cblk_w);
-        ph = next_pow2_at_least(ph, cblk_h);
-
-        enc.prcw_init[r as usize] = pw;
-        enc.prch_init[r as usize] = ph;
-    }
-}
-
-/// Nastaví volitelné J2K markery přes OpenJPEG "extra options".
-/// Funguje v OpenJPEG >= 2.4 (symbol `opj_encoder_set_extra_options`).
-fn set_openjpeg_extra_options(codec: *mut opj_codec_t, eff: &Effective) -> Result<()> {
-    // Pozn.: CString musíme udržet naživu po dobu volání (držíme je ve vektoru).
-    let mut cstrs: Vec<std::ffi::CString> = Vec::new();
-
-    if eff.tlm {
-        // TLM = Tile-part Length Marker v JP2/JPX – přidá tabulku délek tile-partů.
-        cstrs.push(std::ffi::CString::new("TLM=YES").unwrap());
-    }
-    if eff.plt {
-        // PLT = Packet Length Marker v Tile-Part Headeru – zapisuje délky packetů.
-        cstrs.push(std::ffi::CString::new("PLT=YES").unwrap());
-    }
-
-    // Pokud není co nastavovat, skončíme bez chyby.
-    if cstrs.is_empty() {
-        return Ok(());
-    }
-
-    // Převedeme na pole ukazatelů a zakončíme NULLem (OpenJPEG očekává NULL-terminated seznam).
-    let mut ptrs: Vec<*const c_char> = cstrs.iter().map(|s| s.as_ptr()).collect();
-    ptrs.push(std::ptr::null());
-
-    let ok = unsafe { opj_encoder_set_extra_options(codec, ptrs.as_ptr()) } != 0;
-    if !ok {
-        return Err(anyhow!("opj_encoder_set_extra_options failed (TLM/PLT)"));
-    }
-    Ok(())
-}
-
-// --- Main conversion -----------------------------------------------------------
-
-fn convert_one(input: &Path, output: &Path, args: &Args) -> Result<()> {
-    eprintln!("  [DEBUG] Starting conversion for: {}", input.display());
-
-    // Normalize flags once for this conversion
-    let eff = args.effective();
-
-    // Metadata (DPI/ICC)
-    eprintln!("  [DEBUG] Reading TIFF metadata");
-    let meta = read_tiff_meta(input).unwrap_or(TiffMeta {
-        xdpi: None,
-        ydpi: None,
-        unit: ResUnit::None,
-        icc: None,
-    });
-
-    // Decode TIFF
-    eprintln!("  [DEBUG] Opening TIFF file");
-    let f = File::open(input).with_context(|| format!("Open {}", input.display()))?;
-
-    eprintln!("  [DEBUG] Creating decoder");
-    let mut dec = Decoder::new(f)?;
-
-    eprintln!("  [DEBUG] Reading dimensions");
-    let (w, h) = dec.dimensions()?;
-    eprintln!("  [DEBUG] Dimensions: {}x{}", w, h);
-
-    eprintln!("  [DEBUG] Reading color type");
-    let ct = dec.colortype()?;
-    eprintln!("  [DEBUG] Color type: {:?}", ct);
-
-    let (bit_depth, channels, rgb) = match ct {
-        ColorType::Gray(n) => (n as u32, 1u32, false),
-        ColorType::RGB(n) => (n as u32, 3u32, true),
-        ColorType::RGBA(n) => {
-            return Err(anyhow!(
-                "TIFF has alpha channel ({}-bit). Please flatten/remove alpha.",
-                n
-            ));
-        }
-        ColorType::CMYK(n) => {
-            return Err(anyhow!(
-                "CMYK {}-bit is not supported (convert to RGB/Gray).",
-                n
-            ));
-        }
-        other => return Err(anyhow!("Unsupported TIFF: {:?}", other)),
-    };
-    eprintln!(
-        "  [DEBUG] Bit depth: {}, Channels: {}, RGB: {}",
-        bit_depth, channels, rgb
-    );
-
-    eprintln!("  [DEBUG] Reading image data");
-    let pixels = match dec.read_image()? {
-        DecodingResult::U8(buf) => {
-            eprintln!("  [DEBUG] Buffer type: U8, size: {}", buf.len());
-            PixelBuf::U8(buf)
-        }
-        DecodingResult::U16(buf) => {
-            eprintln!("  [DEBUG] Buffer type: U16, size: {}", buf.len());
-            PixelBuf::U16(buf)
-        }
-        _ => return Err(anyhow!("Unsupported TIFF buffer")),
-    };
-
-    eprintln!("  [DEBUG] Creating OpenJPEG image components");
-    let mut cmpts: Vec<opj_image_cmptparm_t> = (0..channels)
-        .map(|_| opj_image_cmptparm_t {
-            dx: 1,
-            dy: 1,
-            w,
-            h,
-            x0: 0,
-            y0: 0,
-            prec: bit_depth,
-            bpp: bit_depth,
-            sgnd: 0,
-        })
-        .collect();
-
-    let clrspc = if rgb {
-        COLOR_SPACE::OPJ_CLRSPC_SRGB
-    } else {
-        COLOR_SPACE::OPJ_CLRSPC_GRAY
-    };
-
-    eprintln!("  [DEBUG] Creating OpenJPEG image");
-    let img: *mut opj_image_t = unsafe {
-        let p = opj_image_create(channels, cmpts.as_mut_ptr(), clrspc);
-        if p.is_null() {
-            return Err(anyhow!("opj_image_create failed"));
-        }
-        (*p).x0 = 0;
-        (*p).y0 = 0;
-        (*p).x1 = w;
-        (*p).y1 = h;
-        p
-    };
-
-    // ICC: override from --icc or use best-effort TIFF ICC
-    if let Some(icc_path) = &args.icc {
-        eprintln!("  [DEBUG] Loading ICC profile from: {}", icc_path.display());
-        let mut buf = Vec::new();
-        File::open(icc_path)
-            .with_context(|| format!("Read ICC {}", icc_path.display()))?
-            .read_to_end(&mut buf)?;
-        unsafe { attach_icc(img, &buf) };
-    } else if let Some(icc) = &meta.icc {
-        eprintln!("  [DEBUG] Using TIFF ICC profile (size: {})", icc.len());
-        unsafe { attach_icc(img, icc) };
-    }
-
-    eprintln!("  [DEBUG] Filling component planes");
-    match pixels {
-        PixelBuf::U8(buf) => {
-            eprintln!("  [DEBUG] Filling U8 components");
-            // <<< CHANGED: pass eff.avx2 >>>
-            fill_components_u8(img, &buf, w, h, channels, eff.avx2)?
-        }
-        PixelBuf::U16(buf) => {
-            eprintln!("  [DEBUG] Filling U16 components");
-            // <<< CHANGED: pass eff.avx2 >>>
-            fill_components_u16(img, &buf, w, h, channels, eff.avx2)?
-        }
-    }
-
-    // Encoder parameters (lossless 5/3, tiles, code-blocks, levels)
-    eprintln!("  [DEBUG] Setting encoder parameters");
-
-    // Parse tile size
-    let (tile_w, tile_h) = parse_wh(&args.tile)?;
-
-    // Parse code-block size + validate (must be power of two in range 4..=1024)
-    let (blk_w, blk_h) = parse_wh(&args.block)?;
-    let is_pow2 = |v: u32| v != 0 && (v & (v - 1)) == 0;
-    let valid_cb = |v: u32| is_pow2(v) && (4..=1024).contains(&v);
-    if !valid_cb(blk_w) || !valid_cb(blk_h) {
-        return Err(anyhow!(
-            "Invalid code-block size {}x{} (must be power of two in 4..=1024)",
-            blk_w,
-            blk_h
-        ));
-    }
-
-    // Number of wavelet decomposition levels
-    let levels: u32 = if args.levels == "auto" {
-        auto_levels(w, h)
-    } else {
-        args.levels.parse::<u32>().context("parse --levels")?
-    };
-
-    // Initialize OpenJPEG encoder parameters with defaults
-    let mut enc_params: opj_cparameters_t = unsafe {
-        let mut p = std::mem::MaybeUninit::<opj_cparameters_t>::zeroed();
-        opj_set_default_encoder_parameters(p.as_mut_ptr());
-        p.assume_init()
-    };
-
-    // Reversible 5/3 transform (lossless)
-    enc_params.irreversible = 0;
-
-    // Selective arithmetic coding bypass (code-block style 'LAZY')
-    if eff.bypass {
-        enc_params.mode |= J2K_CCP_CBLKSTY_LAZY;
-    }
-
-    // Enable tiling
-    enc_params.tile_size_on = 1;
-    enc_params.cp_tx0 = 0;
-    enc_params.cp_ty0 = 0;
-    enc_params.cp_tdx = tile_w as i32;
-    enc_params.cp_tdy = tile_h as i32;
-
-    // Code-block size
-    enc_params.cblockw_init = blk_w as i32;
-    enc_params.cblockh_init = blk_h as i32;
-
-    // Resolution levels
-    enc_params.numresolution = levels as i32;
-
-    // Single quality layer (lossless)
-    enc_params.tcp_numlayers = 1;
-
-    // Progression order
-    enc_params.prog_order = parse_order(&args.order);
-
-    // Enable SOP/EPH markers
-    if eff.sop {
-        enc_params.csty |= J2K_CCP_CSTY_SOP;
-    }
-    if eff.eph {
-        enc_params.csty |= J2K_CCP_CSTY_EPH;
-    }
-
-    // Enable reversible MCT for RGB if allowed
-    if rgb && eff.mct {
-        enc_params.tcp_mct = 1;
-    }
-
-    // Enable precincts 256×256 … 128×128 (power-of-two, >= code-block)
-    if eff.precincts {
-        let cblk_w_i32 = enc_params.cblockw_init;
-        let cblk_h_i32 = enc_params.cblockh_init;
-        fill_precincts(&mut enc_params, levels, cblk_w_i32, cblk_h_i32);
-    }
-
-    // Enable tile-parts with R split order (by resolution)
-    if eff.tp_r {
-        enc_params.tp_on = 1;
-        enc_params.tp_flag = b'R' as _;
-    }
-
-    // Single quality layer, explicitly lossless
-    enc_params.tcp_numlayers = 1; // already set, keep it
-    enc_params.tcp_rates[0] = 0.0; // 0.0 = lossless in OpenJPEG
-    enc_params.cp_disto_alloc = 1; // use rate/distortion allocation (required when using rates)
-    enc_params.cp_fixed_quality = 0; // make sure we're not using fixed PSNR mode
-
-    eprintln!("  [DEBUG] Creating OpenJPEG codec");
-    let codec: *mut opj_codec_t = unsafe { opj_create_compress(CODEC_FORMAT::OPJ_CODEC_JP2) };
-    if codec.is_null() {
-        unsafe {
-            opj_image_destroy(img);
-        }
-        return Err(anyhow!("opj_create_compress failed"));
-    }
-
-    let n_threads = if args.threads == 0 {
-        std::thread::available_parallelism()
-            .map(|n| n.get())
-            .unwrap_or(1)
-    } else {
-        args.threads
-    } as i32;
-
-    unsafe { opj_codec_set_threads(codec, n_threads) };
-
-    eprintln!("  [DEBUG] Setting up encoder");
-    let ok = unsafe { opj_setup_encoder(codec, &mut enc_params as *mut _, img) } != 0;
-    if !ok {
-        unsafe {
-            opj_destroy_codec(codec);
-            opj_image_destroy(img);
-        }
-        return Err(anyhow!("opj_setup_encoder failed"));
-    }
-    // ---- Extra options: TLM/PLT --------------------------------------------------
-    if let Err(e) = set_openjpeg_extra_options(codec, &eff) {
-        // Uvolnit dříve alokované zdroje a vrátit chybu
-        unsafe {
-            opj_destroy_codec(codec);
-            opj_image_destroy(img);
-        }
-        return Err(e);
-    }
-
-    eprintln!("  [DEBUG] Creating output stream");
-
-    // Normalize path for OpenJPEG
-    let output_str = output.to_string_lossy().replace('\\', "/");
-    let c_out = CString::new(output_str.as_bytes())?;
-
-    let stream: *mut opj_stream_t =
-        unsafe { opj_stream_create_default_file_stream(c_out.as_ptr(), 0) };
-    if stream.is_null() {
-        unsafe {
-            opj_destroy_codec(codec);
-            opj_image_destroy(img);
-        }
-        return Err(anyhow!("opj_stream_create_default_file_stream failed"));
-    }
-
-    eprintln!("  [DEBUG] Starting compression");
-    let started = unsafe { opj_start_compress(codec, img, stream) } != 0;
-    if !started {
-        unsafe {
-            opj_stream_destroy(stream);
-            opj_destroy_codec(codec);
-            opj_image_destroy(img);
-        }
-        return Err(anyhow!("opj_start_compress failed"));
-    }
-
-    eprintln!("  [DEBUG] Encoding");
-    let encoded = unsafe { opj_encode(codec, stream) } != 0;
-
-    eprintln!("  [DEBUG] Ending compression");
-    let ended = unsafe { opj_end_compress(codec, stream) } != 0;
-
-    if !encoded || !ended {
-        return Err(anyhow!("Compression failed (opj_encode/opj_end_compress)"));
-    }
-
-    eprintln!("  [DEBUG] Compression completed successfully");
-
-    // JP2 Resolution box (visible DPI for most viewers)
-    // <<< CHANGED: use eff.dpi_box >>>
-    if eff.dpi_box {
-        if let (Some(xdpi), Some(ydpi)) = (meta.xdpi, meta.ydpi) {
-            eprintln!("  [DEBUG] Adding resolution box");
-            let _ = insert_resolution_box_jp2(output, xdpi, ydpi, meta.unit);
-        }
-    }
-
-    // XMP DPI (optional fallback)
-    // <<< CHANGED: use eff.xmp_dpi >>>
-    if eff.xmp_dpi {
-        if let (Some(xdpi), Some(ydpi)) = (meta.xdpi, meta.ydpi) {
-            eprintln!("  [DEBUG] Adding XMP metadata");
-            let xmp = build_xmp_with_dpi(xdpi, ydpi, meta.unit);
-            let _ = append_jp2_xmp_box(output, xmp.as_bytes());
-        }
-    }
-
-    eprintln!("  [DEBUG] Conversion completed successfully");
-
-    // Krátká pauza pro stabilizaci
-    std::thread::sleep(std::time::Duration::from_millis(50));
-
-    Ok(())
-}
-
-// ---- De-interleave helpers ----------------------------------------------------
-
-/// Fill planar components from interleaved U8 buffer.
-/// Fast paths:
-///   • Gray8: simple copy (auto-vectorized)
-///   • RGB8: parallel rows via rayon; AVX2 gather path if enabled
-#[cfg_attr(not(target_arch = "x86_64"), allow(unused_variables))]
-fn fill_components_u8(
-    img: *mut opj_image_t,
-    inter: &[u8],
-    w: u32,
-    h: u32,
-    ch: u32,
-    use_avx2: bool,
-) -> Result<()> {
-    let plane = (w as usize) * (h as usize);
-
-    if ch == 1 {
-        // ---------------- Gray8 ----------------
-        let ptr_i32 = unsafe { malloc(std::mem::size_of::<i32>() * plane) as *mut i32 };
-        if ptr_i32.is_null() {
-            return Err(anyhow!("alloc comp u8 gray"));
-        }
-        let dst = unsafe { std::slice::from_raw_parts_mut(ptr_i32, plane) };
-        // simple copy (compiler will auto-vectorize)
-        for i in 0..plane {
-            dst[i] = inter[i] as i32;
-        }
-        unsafe {
-            (*(*img).comps.add(0)).data = ptr_i32;
-        }
-        return Ok(());
-    } else if ch == 3 {
-        // ---------------- RGB8 -----------------
-        let ptr_r = unsafe { malloc(std::mem::size_of::<i32>() * plane) as *mut i32 };
-        let ptr_g = unsafe { malloc(std::mem::size_of::<i32>() * plane) as *mut i32 };
-        let ptr_b = unsafe { malloc(std::mem::size_of::<i32>() * plane) as *mut i32 };
-        if ptr_r.is_null() || ptr_g.is_null() || ptr_b.is_null() {
-            return Err(anyhow!("alloc comp u8 rgb"));
-        }
-
-        let w_us = w as usize;
-        let stride = w_us * 3;
-
-        // Create mutable slices over the malloc'd planes (safe to split by rows later)
-        let dst_r_slice = unsafe { std::slice::from_raw_parts_mut(ptr_r, plane) };
-        let dst_g_slice = unsafe { std::slice::from_raw_parts_mut(ptr_g, plane) };
-        let dst_b_slice = unsafe { std::slice::from_raw_parts_mut(ptr_b, plane) };
-
-        // Parallelize by rows; each thread gets disjoint &mut chunks.
-        dst_r_slice
-            .par_chunks_mut(w_us)
-            .zip(dst_g_slice.par_chunks_mut(w_us))
-            .zip(dst_b_slice.par_chunks_mut(w_us))
-            .enumerate()
-            .for_each(|(y, ((rrow, grow), brow))| {
-                let src_row = &inter[y * stride..(y + 1) * stride];
-
-                // AVX2 path with 3-byte padding to prevent OOB gathers at row end
-                #[cfg(target_arch = "x86_64")]
-                {
-                    if use_avx2 && std::is_x86_feature_detected!("avx2") && w_us >= 8 {
-                        // Pad by 3 bytes (gather may read up to +2 beyond last pixel byte)
-                        let mut row_pad = Vec::with_capacity(stride + 3);
-                        row_pad.extend_from_slice(src_row);
-                        row_pad.extend_from_slice(&[0u8; 3]);
-
-                        unsafe {
-                            deinterleave_rgb8_row_avx2(
-                                row_pad.as_ptr(),
-                                w_us,
-                                rrow.as_mut_ptr(),
-                                grow.as_mut_ptr(),
-                                brow.as_mut_ptr(),
-                            );
-                        }
-                        return; // done for this row
-                    }
-                }
-
-                // Scalar fallback
-                for x in 0..w_us {
-                    let p = 3 * x;
-                    rrow[x] = src_row[p] as i32;
-                    grow[x] = src_row[p + 1] as i32;
-                    brow[x] = src_row[p + 2] as i32;
-                }
-            });
-
-        unsafe {
-            (*(*img).comps.add(0)).data = ptr_r;
-            (*(*img).comps.add(1)).data = ptr_g;
-            (*(*img).comps.add(2)).data = ptr_b;
-        }
-        return Ok(());
-    }
-
-    // ------------- Generic N-channel fallback (rare here) -------------
-    for c in 0..(ch as usize) {
-        let ptr_i32 = unsafe { malloc(std::mem::size_of::<i32>() * plane) as *mut i32 };
-        if ptr_i32.is_null() {
-            return Err(anyhow!("alloc comp u8 generic"));
-        }
-        let dst = unsafe { std::slice::from_raw_parts_mut(ptr_i32, plane) };
-        for y in 0..(h as usize) {
-            for x in 0..(w as usize) {
-                let idx = y * (w as usize) * (ch as usize) + x * (ch as usize) + c;
-                dst[y * (w as usize) + x] = inter[idx] as i32;
-            }
-        }
-        unsafe {
-            (*(*img).comps.add(c)).data = ptr_i32;
-        }
-    }
-
-    Ok(())
-}
-
-/// Fill planar components from interleaved U16 buffer.
-/// Fast paths:
-///  - Gray16: AVX2 widen to i32 if available
-///  - RGB16: parallel rows via rayon (scalar widen)
-#[cfg_attr(not(target_arch = "x86_64"), allow(unused_variables))]
-fn fill_components_u16(
-    img: *mut opj_image_t,
-    inter: &[u16],
-    w: u32,
-    h: u32,
-    ch: u32,
-    use_avx2: bool,
-) -> Result<()> {
-    // Silence “unused variable” on ARM/aarch64 etc.
-    #[cfg(not(target_arch = "x86_64"))]
-    let _ = use_avx2;
-
-    let plane = (w as usize) * (h as usize);
-    unsafe {
-        if ch == 1 {
-            // Gray16
-            let ptr_i32 = malloc(std::mem::size_of::<i32>() * plane) as *mut i32;
-            if ptr_i32.is_null() {
-                return Err(anyhow!("alloc comp u16 gray"));
-            }
-            let dst = std::slice::from_raw_parts_mut(ptr_i32, plane);
-            if use_avx2 && cfg!(target_arch = "x86_64") {
-                #[cfg(target_arch = "x86_64")]
-                {
-                    if widen_u16_to_i32_avx2(inter, dst) {
-                        (*(*img).comps.add(0)).data = ptr_i32;
-                        return Ok(());
-                    }
-                }
-            }
-            for i in 0..plane {
-                dst[i] = inter[i] as i32;
-            }
-            (*(*img).comps.add(0)).data = ptr_i32;
-            return Ok(());
-        } else if ch == 3 {
-            // RGB16: allocate three planes and fill in parallel per row
-            let ptr_r = malloc(std::mem::size_of::<i32>() * plane) as *mut i32;
-            let ptr_g = malloc(std::mem::size_of::<i32>() * plane) as *mut i32;
-            let ptr_b = malloc(std::mem::size_of::<i32>() * plane) as *mut i32;
-            if ptr_r.is_null() || ptr_g.is_null() || ptr_b.is_null() {
-                return Err(anyhow!("alloc comp u16 rgb"));
-            }
-
-            let w_us = w as usize;
-            let stride = w_us * 3;
-
-            // Create mutable slices over the malloc'd planes.
-            let dst_r_slice = std::slice::from_raw_parts_mut(ptr_r, plane);
-            let dst_g_slice = std::slice::from_raw_parts_mut(ptr_g, plane);
-            let dst_b_slice = std::slice::from_raw_parts_mut(ptr_b, plane);
-
-            // Parallelize by rows; scalar widen (16->32) per pixel.
-            dst_r_slice
-                .par_chunks_mut(w_us)
-                .zip(dst_g_slice.par_chunks_mut(w_us))
-                .zip(dst_b_slice.par_chunks_mut(w_us))
-                .enumerate()
-                .for_each(|(y, ((rrow, grow), brow))| {
-                    let src_row = &inter[y * stride..(y + 1) * stride];
-                    for x in 0..w_us {
-                        let p = 3 * x;
-                        rrow[x] = src_row[p] as i32;
-                        grow[x] = src_row[p + 1] as i32;
-                        brow[x] = src_row[p + 2] as i32;
-                    }
-                });
-
-            (*(*img).comps.add(0)).data = ptr_r;
-            (*(*img).comps.add(1)).data = ptr_g;
-            (*(*img).comps.add(2)).data = ptr_b;
-            return Ok(());
-        }
-
-        // Generic N-channel fallback
-        for c in 0..(ch as usize) {
-            let ptr_i32 = malloc(std::mem::size_of::<i32>() * plane) as *mut i32;
-            if ptr_i32.is_null() {
-                return Err(anyhow!("alloc comp u16 generic"));
-            }
-            for y in 0..(h as usize) {
-                for x in 0..(w as usize) {
-                    let idx = y * (w as usize) * (ch as usize) + x * (ch as usize) + c;
-                    *ptr_i32.add(y * (w as usize) + x) = inter[idx] as i32;
-                }
-            }
-            (*(*img).comps.add(c)).data = ptr_i32;
-        }
-    }
-    Ok(())
-}
-
-fn openjpeg_threads(threads: usize) -> Result<i32> {
-    let threads = if threads == 0 {
-        std::thread::available_parallelism()
-            .map(|n| n.get())
-            .unwrap_or(1)
-    } else {
-        threads
-    };
-    i32::try_from(threads).context("OpenJPEG thread count is too large")
-}
-
-fn print_jp2_info(path: &Path, info: &decoder::Jp2Info) {
-    println!("{}", path.display());
-    println!("  size: {}x{}", info.width, info.height);
-    println!("  components: {}", info.components.len());
-    println!("  icc_profile_len: {}", info.icc_profile_len);
-    for (idx, component) in info.components.iter().enumerate() {
-        println!(
-            "  component {}: {}x{}, dx={}, dy={}, precision={}, signed={}",
-            idx,
-            component.width,
-            component.height,
-            component.dx,
-            component.dy,
-            component.precision,
-            component.signed
-        );
-    }
 }

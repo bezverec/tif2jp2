@@ -1,0 +1,3 @@
+tool,files,ok,warn,fail,notes
+tif2jp2,4,26,0,1,"Synthetic benchmark TIFFs had no embedded ICC profile; this is the only reported failure."
+kakadu,4,21,3,3,"Additional findings: coding bypass disabled, precinct warnings, TLM not before first SOT, incomplete tile-part sequence, missing ICC."

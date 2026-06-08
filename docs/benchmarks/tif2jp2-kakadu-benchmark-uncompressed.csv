@@ -1,0 +1,5 @@
+file,input_mb,tool,mode,runs,avg_s,min_s,max_s,output_mb
+uncompressed_noisy_rgb_2048.tif,12,tif2jp2,default,3,0.350,0.327,0.366,12.94
+uncompressed_noisy_rgb_2048.tif,12,kakadu,default,3,1.347,1.338,1.354,13.20
+uncompressed_noisy_rgb_4096.tif,48,tif2jp2,default,3,0.840,0.821,0.858,51.78
+uncompressed_noisy_rgb_4096.tif,48,kakadu,default,3,5.297,5.274,5.317,52.81

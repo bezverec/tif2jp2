@@ -272,7 +272,28 @@ The code is AI generated using ChatGPT model 5 and Deepseek v3.x.
 
 ---
 
-## Benchmark
+## Current Benchmark (v0.3.0)
+
+The current benchmark set compares tif2jp2 v0.3.0 with Kakadu on synthetic uncompressed 24-bit RGB TIFF inputs, including a fair single-thread run.
+
+| File | Input | Tool | Mode | Runs | Average | Output |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `uncompressed_noisy_rgb_2048.tif` | 12 MB | tif2jp2 | default | 3 | 0.350 s | 12.94 MB |
+| `uncompressed_noisy_rgb_2048.tif` | 12 MB | Kakadu | default | 3 | 1.347 s | 13.20 MB |
+| `uncompressed_noisy_rgb_4096.tif` | 48 MB | tif2jp2 | default | 3 | 0.840 s | 51.78 MB |
+| `uncompressed_noisy_rgb_4096.tif` | 48 MB | Kakadu | default | 3 | 5.297 s | 52.81 MB |
+| `uncompressed_noisy_rgb_2048.tif` | 12 MB | tif2jp2 | single-thread | 3 | 1.498 s | 12.94 MB |
+| `uncompressed_noisy_rgb_2048.tif` | 12 MB | Kakadu | single-thread | 3 | 1.344 s | 13.20 MB |
+| `uncompressed_noisy_rgb_4096.tif` | 48 MB | tif2jp2 | single-thread | 3 | 5.300 s | 51.78 MB |
+| `uncompressed_noisy_rgb_4096.tif` | 48 MB | Kakadu | single-thread | 3 | 5.290 s | 52.81 MB |
+
+Validation was run with `kdu_expand`, `tif2jp2 --info`, and `valid2000`. tif2jp2 outputs reported `OK=26 WARN=0 FAIL=1`; the only failure was the missing ICC profile, expected for the synthetic benchmark TIFFs. Kakadu outputs reported additional findings around coding bypass, precincts, TLM placement, and tile-part completeness.
+
+Detailed methodology and CSV files are in [`docs/benchmarks`](docs/benchmarks/README.md).
+
+---
+
+## Historical Benchmark
 
 My benchmark attempt on Windows 11 *(not reliable, your results may vary significantly; I will be happy to see any benchmark and/or real-world results :))*
 - tif2jp2 v0.1.7
